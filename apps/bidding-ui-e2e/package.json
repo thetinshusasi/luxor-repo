@@ -1,0 +1,10 @@
+{
+  "name": "@luxor-repo/bidding-ui-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@luxor-repo/bidding-ui"
+    ]
+  }
+}

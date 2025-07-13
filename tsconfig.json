@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/bidding-api-e2e"
+    },
+    {
+      "path": "./apps/bidding-api"
+    },
+    {
+      "path": "./apps/bidding-ui-e2e"
+    },
+    {
+      "path": "./apps/bidding-ui"
+    }
+  ]
+}
