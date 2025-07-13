@@ -50,6 +50,57 @@
           "build"
         ],
         "command": "docker build -f apps/bidding-api/Dockerfile . -t luxor-repo-bidding-api"
+      },
+      "db-up": {
+        "executor": "nx:run-commands",
+        "options": {
+          "commands": [
+            "docker-compose down 2>/dev/null || true",
+            "docker-compose --env-file apps/bidding-api/.env up -d"
+          ],
+          "parallel": false
+        }
+      },
+      "db-down": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker-compose down"
+        }
+      },
+      "db-logs": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker-compose logs -f"
+        }
+      },
+      "db-restart": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker-compose restart"
+        }
+      },
+      "db-clean": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker-compose down -v"
+        }
+      },
+      "db-kill-ports": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker-compose down 2>/dev/null || true"
+        }
+      },
+      "dev-full": {
+        "executor": "nx:run-commands",
+        "options": {
+          "commands": [
+            "docker-compose down 2>/dev/null || true",
+            "docker-compose --env-file apps/bidding-api/.env up -d",
+            "nx run-many --targets=serve,dev --projects=bidding-api,bidding-ui"
+          ],
+          "parallel": false
+        }
       }
     }
   }

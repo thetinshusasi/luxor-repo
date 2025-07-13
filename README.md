@@ -12,7 +12,7 @@
 
 - Node.js (v18 or higher)
 - pnpm (recommended) or npm
-- PostgreSQL (for database)
+- Docker and Docker Compose (for database)
 
 ### Installation
 
@@ -24,14 +24,140 @@ pnpm install
 cp apps/bidding-api/.env.example apps/bidding-api/.env
 cp apps/bidding-ui/.env.example apps/bidding-ui/.env
 
-# Start both applications
-npx nx run-many --targets=serve,dev --projects=bidding-api,bidding-ui
+# Start database and both applications
+npx nx run bidding-api:dev-full
+```
+
+### Docker Commands
+
+The project includes Docker Compose setup for PostgreSQL and pgAdmin. Use these Nx targets:
+
+```bash
+# Start PostgreSQL and pgAdmin
+npx nx run bidding-api:db-up
+
+# Stop database services
+npx nx run bidding-api:db-down
+
+# View database logs
+npx nx run bidding-api:db-logs
+
+# Restart database services
+npx nx run bidding-api:db-restart
+
+# Clean up (removes volumes)
+npx nx run bidding-api:db-clean
+
+# Stop database services
+npx nx run bidding-api:db-kill-ports
+
+# Full development setup (DB + API + UI)
+npx nx run bidding-api:dev-full
 ```
 
 ### Access URLs
 
 - **Frontend (bidding-ui)**: http://localhost:3000
 - **Backend (bidding-api)**: http://localhost:3001/api
+- **PostgreSQL Database**: localhost:5432
+- **pgAdmin**: http://localhost:5050 (admin@luxor.com / admin)
+
+## 🗄️ pgAdmin Configuration
+
+### Accessing pgAdmin
+
+1. **Start the database services:**
+
+   ```bash
+   npx nx run bidding-api:db-up
+   ```
+
+2. **Access pgAdmin web interface:**
+   - URL: http://localhost:5050
+   - Email: admin@luxor.com
+   - Password: admin
+
+### Setting Up Database Connection
+
+After logging into pgAdmin, follow these steps to connect to the PostgreSQL database:
+
+1. **Right-click on "Servers"** in the left sidebar
+2. **Select "Register" → "Server..."**
+3. **Fill in the connection details:**
+
+#### General Tab
+
+- **Name**: Luxor Bidding Database (or any name you prefer)
+
+#### Connection Tab
+
+- **Host name/address**: `luxor-postgres` (container name)
+- **Port**: `5432`
+- **Maintenance database**: `luxor_bidding`
+- **Username**: `postgres`
+- **Password**: `password`
+
+#### Advanced Tab (Optional)
+
+- **DB restriction**: Leave empty for access to all databases
+- **SSL mode**: `Prefer` (for development)
+
+### Connection Details Summary
+
+| Parameter    | Value            |
+| ------------ | ---------------- |
+| **Host**     | `luxor-postgres` |
+| **Port**     | `5432`           |
+| **Database** | `luxor_bidding`  |
+| **Username** | `postgres`       |
+| **Password** | `password`       |
+
+### Environment Variables
+
+You can customize pgAdmin settings using these environment variables:
+
+```bash
+# pgAdmin Configuration
+PGADMIN_EMAIL=admin@luxor.com
+PGADMIN_PASSWORD=admin
+PGADMIN_PORT=5050
+```
+
+### Troubleshooting
+
+**If you can't connect from pgAdmin:**
+
+1. **Check if containers are running:**
+
+   ```bash
+   docker ps
+   ```
+
+2. **Verify the PostgreSQL container is healthy:**
+
+   ```bash
+   npx nx run bidding-api:db-logs
+   ```
+
+3. **Try connecting with `localhost` instead of `luxor-postgres`:**
+
+   - Host: `localhost`
+   - Port: `5432`
+
+4. **Restart the database services:**
+   ```bash
+   npx nx run bidding-api:db-restart
+   ```
+
+### Database Management
+
+Once connected, you can:
+
+- **Browse databases**: Expand the server to see all databases
+- **Run queries**: Use the Query Tool (SQL Editor)
+- **Manage tables**: Right-click on schemas to create/modify tables
+- **View data**: Browse table contents through the object browser
+- **Export/Import**: Use pgAdmin's import/export tools for data migration
 
 ## 🔧 Environment Configuration
 
