@@ -7,6 +7,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { Logger } from 'nestjs-pino';
+import { DataSource } from 'typeorm';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -24,6 +25,8 @@ async function bootstrap() {
     })
   );
   const port = process.env.PORT || 3001;
+  const dataSource = app.get(DataSource);
+
   await app.listen(port);
 }
 
