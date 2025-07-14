@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BidStatus } from '@luxor-repo/shared';
-import { User } from '../../user/entities/user.entity';
 import { Collection } from '../../collection/entities/collection.entity';
 
 @Entity()
@@ -53,11 +52,11 @@ export class Bid {
 
   @ApiProperty({
     description: 'The user who placed the bid',
-    type: () => User,
+    type: () => 'User',
   })
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne('User', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user!: User;
+  user!: any;
 
   @ApiProperty({
     description: 'Current status of the bid',

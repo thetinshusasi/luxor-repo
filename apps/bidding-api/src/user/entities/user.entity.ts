@@ -8,7 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Bid } from '../../bid/entities/bid.entity';
+import { UserRole } from '@luxor-repo/shared';
 
 @Entity()
 export class User {
@@ -32,6 +32,14 @@ export class User {
   })
   @Column({ type: 'varchar', length: 255, unique: true })
   email!: string;
+
+  @ApiProperty({
+    description: 'Role of the user in the system',
+    example: UserRole.CUSTOMER,
+    enum: UserRole,
+  })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER })
+  role!: UserRole;
 
   @ApiProperty({
     description: 'Hashed password for user authentication',
@@ -97,8 +105,8 @@ export class User {
 
   @ApiProperty({
     description: 'Bids placed by this user',
-    type: () => [Bid],
+    type: () => ['Bid'],
   })
-  @OneToMany(() => Bid, (bid) => bid.user)
-  bids!: Bid[];
+  @OneToMany('Bid', (bid: any) => bid.user)
+  bids!: any[];
 }
