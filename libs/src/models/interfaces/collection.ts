@@ -2,7 +2,8 @@ export interface ICollection {
   id: string;
   name: string;
   description: string;
-  image: string;
+  stock: number;
+  price: number;
   createdAt: number;
   updatedAt: number;
   deletedAt: number;

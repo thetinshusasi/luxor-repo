@@ -5,9 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { BidStatus } from '@luxor-repo/shared';
+import { User } from '../../user/entities/user.entity';
+import { Collection } from '../../collection/entities/collection.entity';
 
 @Entity()
 export class Bid {
@@ -26,6 +30,14 @@ export class Bid {
   collectionId!: string;
 
   @ApiProperty({
+    description: 'The collection this bid is for',
+    type: () => Collection,
+  })
+  @ManyToOne(() => Collection, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'collectionId' })
+  collection!: Collection;
+
+  @ApiProperty({
     description: 'Bid amount in the smallest currency unit (e.g., cents)',
     example: 5000,
   })
@@ -38,6 +50,14 @@ export class Bid {
   })
   @Column({ type: 'uuid' })
   userId!: string;
+
+  @ApiProperty({
+    description: 'The user who placed the bid',
+    type: () => User,
+  })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user!: User;
 
   @ApiProperty({
     description: 'Current status of the bid',

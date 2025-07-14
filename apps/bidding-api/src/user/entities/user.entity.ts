@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Bid } from '../../bid/entities/bid.entity';
 
 @Entity()
 export class User {
@@ -92,4 +94,11 @@ export class User {
   })
   @Column({ type: 'boolean', default: false })
   isAdmin!: boolean;
+
+  @ApiProperty({
+    description: 'Bids placed by this user',
+    type: () => [Bid],
+  })
+  @OneToMany(() => Bid, (bid) => bid.user)
+  bids!: Bid[];
 }

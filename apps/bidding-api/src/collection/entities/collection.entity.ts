@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Bid } from '../../bid/entities/bid.entity';
 
 @Entity()
 export class Collection {
@@ -39,6 +41,20 @@ export class Collection {
   image!: string;
 
   @ApiProperty({
+    description: 'Number of items in stock for this collection',
+    example: 50,
+  })
+  @Column({ type: 'int' })
+  stock!: number;
+
+  @ApiProperty({
+    description: 'Price of the collection',
+    example: 999.99,
+  })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  price!: number;
+
+  @ApiProperty({
     description: 'Timestamp when the collection was created',
     example: 1640995200000,
   })
@@ -68,4 +84,11 @@ export class Collection {
   })
   @Column({ type: 'boolean', default: false })
   isDeleted!: boolean;
+
+  @ApiProperty({
+    description: 'Bids placed on this collection',
+    type: () => [Bid],
+  })
+  @OneToMany(() => Bid, (bid) => bid.collection)
+  bids!: Bid[];
 }
