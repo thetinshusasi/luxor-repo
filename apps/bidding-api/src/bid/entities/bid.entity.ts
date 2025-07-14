@@ -9,8 +9,13 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { BidStatus } from '@luxor-repo/shared';
-import { Collection } from '../../collection/entities/collection.entity';
+
+// Temporary enum for migration generation
+enum BidStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+}
 
 @Entity()
 export class Bid {
@@ -30,11 +35,11 @@ export class Bid {
 
   @ApiProperty({
     description: 'The collection this bid is for',
-    type: () => Collection,
+    type: () => 'Collection',
   })
-  @ManyToOne(() => Collection, { onDelete: 'CASCADE' })
+  @ManyToOne('Collection', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'collectionId' })
-  collection!: Collection;
+  collection!: any;
 
   @ApiProperty({
     description: 'Bid amount in the smallest currency unit (e.g., cents)',

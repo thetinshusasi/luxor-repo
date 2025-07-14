@@ -7,13 +7,11 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { Logger } from 'nestjs-pino';
-import { DataSource } from 'typeorm';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
-  app.useLogger(app.get(Logger));
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
 
@@ -24,8 +22,9 @@ async function bootstrap() {
       transform: true,
     })
   );
+  app.useLogger(app.get(Logger));
+
   const port = process.env.PORT || 3001;
-  const dataSource = app.get(DataSource);
 
   await app.listen(port);
 }

@@ -8,7 +8,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Bid } from '../../bid/entities/bid.entity';
 
 @Entity()
 export class Collection {
@@ -87,8 +86,8 @@ export class Collection {
 
   @ApiProperty({
     description: 'Bids placed on this collection',
-    type: () => [Bid],
+    type: () => ['Bid'],
   })
-  @OneToMany(() => Bid, (bid) => bid.collection)
-  bids!: Bid[];
+  @OneToMany('Bid', (bid: any) => bid.collection)
+  bids!: any[];
 }

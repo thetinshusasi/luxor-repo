@@ -1,10 +1,18 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, OnModuleInit } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { LoggerMiddleware } from '../common/middleware/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from '../user/user.module';
+import { CollectionModule } from '../collection/collection.module';
+import { BidModule } from '../bid/bid.module';
+import { AuthModule } from '../auth/auth.module';
+import { checkDatabaseConnection, getDataSource } from './database-connection';
+import { seedUsers } from '../seeds/user.seed';
+import { DataSource } from 'typeorm';
+import { cleanDatabase } from '../seeds/cleanDatabase';
 
 @Module({
   imports: [
@@ -21,21 +29,48 @@ import { TypeOrmModule } from '@nestjs/typeorm';
             : undefined,
       },
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'luxor',
-      autoLoadEntities: true,
-      synchronize: Boolean(process.env.SYNCHRONIZE) || false,
+    TypeOrmModule.forRootAsync({
+      useFactory: async () => {
+        // Import here to avoid circular dependency
+
+        const config = {
+          type: 'postgres' as const,
+          host: process.env.DB_HOST || 'localhost',
+          port: parseInt(process.env.DB_PORT || '5432'),
+          username: process.env.DB_USER || 'postgres',
+          password: process.env.DB_PASSWORD || 'password',
+          database: process.env.DB_NAME || 'luxor_bidding',
+          autoLoadEntities: true,
+          synchronize: true, // Disable synchronize for production
+          migrations: ['src/migrations/*.ts'],
+          migrationsRun: true, // Run migrations automatically
+        };
+
+        return config;
+      },
     }),
+    UserModule,
+    CollectionModule,
+    BidModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
+export class AppModule implements OnModuleInit {
+  private dataSource: DataSource;
+  constructor() {
+    // Check database connection when the module is initialized
+    this.dataSource = getDataSource();
+  }
+
+  async onModuleInit() {
+    await checkDatabaseConnection();
+
+    // await cleanDatabase(this.dataSource);
+    await seedUsers(this.dataSource);
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
   }

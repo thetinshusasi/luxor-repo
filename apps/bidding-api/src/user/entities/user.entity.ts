@@ -8,7 +8,12 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@luxor-repo/shared';
+
+// Temporary enum for migration generation
+enum UserRole {
+  CUSTOMER = 'customer',
+  ADMIN = 'admin',
+}
 
 @Entity()
 export class User {
