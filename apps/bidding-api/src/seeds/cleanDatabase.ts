@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { Collection } from '../collection/entities/collection.entity';
 import { Bid } from '../bid/entities/bid.entity';
+import { Token } from '../token/entities/token.entity';
 
 async function clearBids(dataSource: DataSource): Promise<void> {
   try {
@@ -36,6 +37,17 @@ async function clearUsers(dataSource: DataSource): Promise<void> {
   }
 }
 
+async function clearTokens(dataSource: DataSource): Promise<void> {
+  try {
+    console.log('🗑️  Clearing tokens...');
+    const tokenRepository = dataSource.getRepository(Token);
+    await tokenRepository.deleteAll();
+    console.log('✅ Cleared tokens');
+  } catch (error: any) {
+    console.error('❌ Failed to clear tokens:', error.message);
+  }
+}
+
 export const cleanDatabase = async (dataSource: DataSource): Promise<void> => {
   try {
     // Initialize the DataSource if not already initialized
@@ -52,6 +64,7 @@ export const cleanDatabase = async (dataSource: DataSource): Promise<void> => {
     await clearBids(dataSource);
     await clearCollections(dataSource);
     await clearUsers(dataSource);
+    await clearTokens(dataSource);
 
     console.log('✅ Database tables cleared successfully (schema preserved)');
   } catch (error: any) {

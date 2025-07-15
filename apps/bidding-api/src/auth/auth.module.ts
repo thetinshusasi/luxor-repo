@@ -18,8 +18,10 @@ import { Token } from '../token/entities/token.entity';
     UserModule,
     TokenModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },
+      secret: process.env.JWT_SECRET || 'dev-jwt-secret-key',
+      signOptions: {
+        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+      },
     }),
   ],
   controllers: [AuthController],

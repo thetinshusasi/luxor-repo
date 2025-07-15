@@ -26,8 +26,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       userId,
       token
     );
-    // eslint-disable-next-line no-debugger
-    debugger;
     const currentTime = new Date();
     if (latestToken && currentTime <= exp) {
       return true;

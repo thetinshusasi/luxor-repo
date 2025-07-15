@@ -7,7 +7,7 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('auth/login')
+  @Post('/login')
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({
     status: 201,
@@ -20,3 +20,4 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 }
+ 
