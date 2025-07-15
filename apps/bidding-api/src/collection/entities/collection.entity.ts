@@ -6,8 +6,11 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Bid } from '../../bid/entities/bid.entity';
 
 @Entity()
 export class Collection {
@@ -32,12 +35,21 @@ export class Collection {
   @Column({ type: 'text' })
   description!: string;
 
+
   @ApiProperty({
-    description: 'URL or path to the collection image',
-    example: 'https://example.com/images/collection.jpg',
+    description: 'ID of the user who placed the bid',
+    example: '123e4567-e89b-12d3-a456-426614174002',
   })
-  @Column({ type: 'varchar', length: 500 })
-  image!: string;
+  @Column({ type: 'uuid' })
+  userId!: string;
+
+  @ApiProperty({
+    description: 'The user who placed the bid',
+    type: () => 'User',
+  })
+  @ManyToOne('User', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user!: any;
 
   @ApiProperty({
     description: 'Number of items in stock for this collection',
@@ -86,8 +98,8 @@ export class Collection {
 
   @ApiProperty({
     description: 'Bids placed on this collection',
-    type: () => ['Bid'],
+    type: () => [Bid],
   })
-  @OneToMany('Bid', (bid: any) => bid.collection)
-  bids!: any[];
+  @OneToMany(() => Bid, (bid) => bid.collection)
+  bids!: Bid[];
 }

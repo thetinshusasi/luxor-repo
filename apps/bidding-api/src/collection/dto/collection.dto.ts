@@ -3,11 +3,20 @@ import {
   IsString,
   IsNumber,
   IsUUID,
+  IsOptional,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 
-export class CreateCollectionDto {
+export class CollectionDto {
+  @ApiProperty({
+    description: 'ID of the collection',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  id!: string;
+
   @ApiProperty({
     description: 'Name of the collection',
     example: 'Vintage Art Collection',
@@ -23,11 +32,11 @@ export class CreateCollectionDto {
   description!: string;
 
   @ApiProperty({
-    description: 'ID of the user who owns the collection',
-    example: '123e4567-e89b-12d3-a456-426614174002',
+    description: 'Whether the user is the owner of the collection',
+    example: true,
   })
-  @IsUUID()
-  userId!: string;
+  @IsBoolean()
+  isOwner!: boolean;
 
   @ApiProperty({
     description: 'Number of items in stock for this collection',

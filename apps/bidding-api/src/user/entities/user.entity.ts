@@ -113,6 +113,13 @@ export class User {
   bids!: any[];
 
   @ApiProperty({
+    description: 'Collections created by this user',
+    type: () => ['Collection'],
+  })
+  @OneToMany('Collection', 'user')
+  collections!: any[];
+
+  @ApiProperty({
     description: 'Tokens associated with the user',
     type: () => ['Token'],
   })

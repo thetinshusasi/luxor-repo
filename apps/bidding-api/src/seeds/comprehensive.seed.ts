@@ -22,7 +22,7 @@ export async function comprehensiveSeed(dataSource: DataSource): Promise<{
 
     // Step 2: Seed Collections (required for bid foreign keys)
     console.log('\n📦 Step 2: Seeding Collections...');
-    const collections = await seedCollections(dataSource);
+    const collections = await seedCollections(dataSource, users);
     console.log(`✅ Collections seeded: ${collections.length}`);
 
     // Step 3: Seed Bids (depends on both users and collections)
