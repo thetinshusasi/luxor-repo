@@ -5,6 +5,8 @@ services:
     image: postgres:15-alpine
     container_name: luxor-postgres
     restart: unless-stopped
+    env_file:
+      - ./apps/bidding-api/.env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -20,9 +22,11 @@ services:
     image: dpage/pgadmin4:latest
     container_name: luxor-pgadmin
     restart: unless-stopped
+    env_file:
+      - ./apps/bidding-api/.env
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@luxor.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - '${PGADMIN_PORT:-5050}:80'
