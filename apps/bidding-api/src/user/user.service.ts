@@ -4,14 +4,27 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>
   ) {}
-  create(createUserDto: CreateUserDto) {
-    return this.userRepository.save(createUserDto);
+  async create(createUserDto: CreateUserDto) {
+    const { password, ...userData } = createUserDto;
+
+    // Hash the password
+    const saltRounds = Number(process.env.SALT_ROUNDS) || 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create user with hashed password
+    const userToCreate = {
+      ...userData,
+      hashedPassword,
+    };
+
+    return this.userRepository.save(userToCreate);
   }
 
   findAll(page: number, limit: number) {
@@ -25,8 +38,23 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    return this.userRepository.update(id, updateUserDto);
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const { password, ...userData } = updateUserDto;
+
+    // Hash the password if it exists
+    let hashedPassword: string | undefined;
+    if (password) {
+      const saltRounds = Number(process.env.SALT_ROUNDS) || 10;
+      hashedPassword = await bcrypt.hash(password, saltRounds);
+    }
+
+    // Prepare update data
+    const updateData = hashedPassword
+      ? { ...userData, hashedPassword }
+      : userData;
+
+    await this.userRepository.update(id, updateData);
+    return this.userRepository.findOne({ where: { id } });
   }
 
   remove(id: string) {

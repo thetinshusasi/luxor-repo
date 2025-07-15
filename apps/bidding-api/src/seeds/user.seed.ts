@@ -5,7 +5,7 @@ import { User } from '../user/entities/user.entity';
 import { UserRole } from '../models/enums/userRole';
 
 const DEFAULT_PASSWORD = '12345';
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = Number(process.env.SALT_ROUNDS) || 10;
 
 export async function seedUsers(dataSource: DataSource): Promise<User[]> {
   const userRepository = dataSource.getRepository(User);
