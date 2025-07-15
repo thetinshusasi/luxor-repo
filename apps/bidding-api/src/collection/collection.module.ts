@@ -6,10 +6,11 @@ import { Collection } from './entities/collection.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ContextExtractInterceptor } from '../interceptors/context-extract/context-extract.interceptor';
 import { TokenModule } from '../token/token.module';
+import { Bid } from '../bid/entities/bid.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Collection]),
+    TypeOrmModule.forFeature([Collection, Bid]),
     TokenModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'dev-jwt-secret-key',
@@ -20,6 +21,6 @@ import { TokenModule } from '../token/token.module';
   ],
   controllers: [CollectionController],
   providers: [CollectionService, ContextExtractInterceptor],
-  exports: [CollectionService],
+  // exports: [CollectionService],
 })
 export class CollectionModule {}

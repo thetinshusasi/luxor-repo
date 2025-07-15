@@ -1,13 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNumber,
-  IsUUID,
-  IsOptional,
-  Min,
-  Max,
-  IsBoolean,
-} from 'class-validator';
+import { IsString, IsNumber, IsUUID, Min, IsBoolean } from 'class-validator';
 
 export class CollectionDto {
   @ApiProperty({
@@ -46,7 +38,6 @@ export class CollectionDto {
   })
   @IsNumber()
   @Min(1)
-  @Max(1000)
   stock!: number;
 
   @ApiProperty({

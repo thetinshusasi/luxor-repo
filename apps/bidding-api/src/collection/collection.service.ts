@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Not, DataSource } from 'typeorm';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { Collection } from './entities/collection.entity';
@@ -6,12 +7,19 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { convertCollectionEnitityToCollectionDto } from '../common/utils/convertCollectionEnitityToCollectionDto';
 import { CollectionDto } from './dto/collection.dto';
+import { Bid } from '../bid/entities/bid.entity';
+import { BidDto } from '../bid/dto/bid.dto';
+import { convertBidEntityToBidDto } from '../common/utils/convertBidEnitityToBidDto';
+import { BidStatus } from '../models/enums/bidStatus';
 
 @Injectable()
 export class CollectionService {
   constructor(
     @InjectRepository(Collection)
-    private collectionRepository: Repository<Collection>
+    private collectionRepository: Repository<Collection>,
+    @InjectRepository(Bid)
+    private bidRepository: Repository<Bid>,
+    private dataSource: DataSource
   ) {}
 
   create(createCollectionDto: CreateCollectionDto) {
@@ -82,17 +90,95 @@ export class CollectionService {
       throw new NotFoundException('Collection not found');
     }
 
-    await this.collectionRepository.update(id, {
-      isDeleted: true,
-    });
+    return this.dataSource.transaction(async (manager) => {
+      // Mark the collection as deleted
+      await manager.update(Collection, id, {
+        isDeleted: true,
+      });
 
-    const updatedCollection = await this.collectionRepository.findOne({
-      where: { id, isDeleted: true, userId },
-    });
-    if (!updatedCollection) {
-      throw new NotFoundException('Collection not found');
-    }
+      // Update all bids related to this collection
+      // Set status as rejected and isDeleted as true
+      await manager.update(
+        Bid,
+        { collectionId: id, isDeleted: false },
+        {
+          status: BidStatus.REJECTED,
+          isDeleted: true,
+        }
+      );
 
-    return convertCollectionEnitityToCollectionDto(updatedCollection, userId);
+      const updatedCollection = await manager.findOne(Collection, {
+        where: { id, isDeleted: true, userId },
+      });
+      if (!updatedCollection) {
+        throw new NotFoundException('Collection not found');
+      }
+
+      return convertCollectionEnitityToCollectionDto(updatedCollection, userId);
+    });
+  }
+
+  async getAllCollectionByUserId(userId: string): Promise<CollectionDto[]> {
+    const collections = await this.collectionRepository.find({
+      where: { userId, isDeleted: false },
+    });
+    return collections.map((collection: Collection) =>
+      convertCollectionEnitityToCollectionDto(collection, userId)
+    );
+  }
+
+  async getAllBidsByCollectionId(
+    collectionId: string,
+    userId: string
+  ): Promise<BidDto[]> {
+    const bids = await this.bidRepository.find({
+      where: { collectionId, isDeleted: false },
+    });
+    return bids.map((bid: Bid) => convertBidEntityToBidDto(bid, userId));
+  }
+
+  async acceptBidByCollectionId(
+    collectionId: string,
+    bidId: string,
+    userId: string
+  ): Promise<BidDto> {
+    return this.dataSource.transaction(async (manager) => {
+      // Find the bid to accept
+      const bid = await manager.findOne(Bid, {
+        where: { id: bidId, collectionId, isDeleted: false },
+      });
+      if (!bid) {
+        throw new NotFoundException('Bid not found');
+      }
+
+      // Accept the selected bid
+      await manager.update(Bid, bidId, {
+        status: BidStatus.ACCEPTED,
+      });
+
+      // Reject all other bids for this collection (except the accepted one)
+      await manager.update(
+        Bid,
+        {
+          collectionId,
+          isDeleted: false,
+          id: Not(bidId),
+        },
+        {
+          status: BidStatus.REJECTED,
+        }
+      );
+
+      // Return the accepted bid
+      const acceptedBid = await manager.findOne(Bid, {
+        where: { id: bidId, collectionId, isDeleted: false },
+      });
+
+      if (!acceptedBid) {
+        throw new NotFoundException('Accepted bid not found');
+      }
+
+      return convertBidEntityToBidDto(acceptedBid, userId);
+    });
   }
 }
