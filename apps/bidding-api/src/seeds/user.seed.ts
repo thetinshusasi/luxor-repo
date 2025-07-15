@@ -10,15 +10,6 @@ const SALT_ROUNDS = 10;
 export async function seedUsers(dataSource: DataSource): Promise<User[]> {
   const userRepository = dataSource.getRepository(User);
 
-  // Check if we're in development mode
-  const isDevelopment = process.env.NODE_ENV === 'development';
-
-  if (isDevelopment) {
-    console.log('🔄 Dropping all users from database...');
-    await userRepository.deleteAll();
-    console.log('✅ Database cleared');
-  }
-
   // Check if users already exist
   const existingUsers = await userRepository.count();
   if (existingUsers > 0) {
@@ -34,8 +25,33 @@ export async function seedUsers(dataSource: DataSource): Promise<User[]> {
 
   const users: Partial<User>[] = [];
 
+  // Create specific admin and customer users
+  const adminUser: Partial<User> = {
+    name: 'Admin User',
+    email: 'admin@gmail.com',
+    hashedPassword,
+    role: UserRole.ADMIN,
+    isActive: true,
+    isDeleted: false,
+    isVerified: true,
+    isAdmin: true,
+  };
+
+  const customerUser: Partial<User> = {
+    name: 'Customer User',
+    email: 'customer1@gmail.com',
+    hashedPassword,
+    role: UserRole.CUSTOMER,
+    isActive: true,
+    isDeleted: false,
+    isVerified: true,
+    isAdmin: false,
+  };
+
+  users.push(adminUser, customerUser);
+
   // Create 10 users with faker data
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 8; i++) {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
     const fullName = `${firstName} ${lastName}`;
@@ -44,11 +60,11 @@ export async function seedUsers(dataSource: DataSource): Promise<User[]> {
       name: fullName,
       email: faker.internet.email({ firstName, lastName }),
       hashedPassword,
-      role: i === 0 ? UserRole.ADMIN : UserRole.CUSTOMER, // First user is admin
+      role: UserRole.CUSTOMER, // All faker users are customers
       isActive: true,
       isDeleted: false,
       isVerified: faker.datatype.boolean(),
-      isAdmin: i === 0, // First user is admin
+      isAdmin: false,
     };
 
     users.push(user);

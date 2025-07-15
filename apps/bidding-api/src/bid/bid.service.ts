@@ -1,26 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBidDto } from './dto/create-bid.dto';
 import { UpdateBidDto } from './dto/update-bid.dto';
+import { Bid } from './entities/bid.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class BidService {
+  constructor(
+    @InjectRepository(Bid)
+    private bidRepository: Repository<Bid>
+  ) {}
+
   create(createBidDto: CreateBidDto) {
-    return 'This action adds a new bid';
+    return this.bidRepository.save(createBidDto);
   }
 
-  findAll() {
-    return `This action returns all bid`;
+  findAll(page: number, limit: number) {
+    return this.bidRepository.find({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} bid`;
+  findOne(id: string) {
+    return this.bidRepository.findOne({ where: { id } });
   }
 
-  update(id: number, updateBidDto: UpdateBidDto) {
-    return `This action updates a #${id} bid`;
+  update(id: string, updateBidDto: UpdateBidDto) {
+    return this.bidRepository.update(id, updateBidDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} bid`;
+  remove(id: string) {
+    return this.bidRepository.update(id, {
+      isDeleted: true,
+    });
   }
 }

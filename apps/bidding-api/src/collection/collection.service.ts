@@ -1,26 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
+import { Collection } from './entities/collection.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class CollectionService {
+  constructor(
+    @InjectRepository(Collection)
+    private collectionRepository: Repository<Collection>
+  ) {}
   create(createCollectionDto: CreateCollectionDto) {
-    return 'This action adds a new collection';
+    return this.collectionRepository.save(createCollectionDto);
   }
 
-  findAll() {
-    return `This action returns all collection`;
+  findAll(page: number, limit: number) {
+    return this.collectionRepository.find({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} collection`;
+  findOne(id: string) {
+    return this.collectionRepository.findOne({ where: { id } });
   }
 
-  update(id: number, updateCollectionDto: UpdateCollectionDto) {
-    return `This action updates a #${id} collection`;
+  update(id: string, updateCollectionDto: UpdateCollectionDto) {
+    return this.collectionRepository.update(id, updateCollectionDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} collection`;
+  remove(id: string) {
+    return this.collectionRepository.update(id, {
+      isDeleted: true,
+    });
   }
 }
