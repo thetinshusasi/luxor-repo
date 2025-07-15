@@ -1,26 +1,72 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { TokenService } from '../token/token.service';
+import { UserService } from '../user/user.service';
+import { User } from '../user/entities/user.entity';
+import { LoginDto } from './dto/login.dto';
+import { ITokenPayload } from '../models/interfaces/token-payload';
+import { UserRole } from '../models/enums/userRole';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    private userService: UserService,
+    private jwtService: JwtService,
+    private tokensService: TokenService
+  ) {}
+
+  async validateUser(
+    email: string,
+    pass: string
+  ): Promise<Partial<User> | null> {
+    const user = await this.userService.findByEmail(email);
+    if (user && (await bcrypt.compare(pass, user.hashedPassword))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { hashedPassword, ...result } = user;
+      return result;
+    }
+    return null;
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(loginDto: LoginDto) {
+    try {
+      const { email, password } = loginDto;
+      const user = await this.validateUser(email, password);
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      const payload = {
+        username: user.email,
+        userId: user.id,
+        role: user.role,
+      };
+      const accessToken = this.jwtService.sign(payload);
+      const { userId, role, exp } = this.jwtService.decode(accessToken) as {
+        userId: string;
+        role: UserRole;
+        exp: Date;
+      };
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+      const { id } = await this.tokensService.create({
+        id: '',
+        user: { id: user.id } as User,
+        token: accessToken,
+        expiresAt: exp,
+      });
+      const tokenPayload: ITokenPayload = {
+        tokenId: id,
+        userId: userId,
+        email: user.email || '',
+        role: role,
+        expiresAt: exp,
+        token: accessToken,
+      };
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+      return tokenPayload;
+    } catch (error) {
+      console.error('Error during login:', error);
+      throw new Error('Login failed');
+    }
   }
 }

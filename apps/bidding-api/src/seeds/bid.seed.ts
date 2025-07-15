@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { Bid } from '../bid/entities/bid.entity';
 import { Collection } from '../collection/entities/collection.entity';
 import { User } from '../user/entities/user.entity';
-import { BidStatus } from '@luxor-repo/shared';
+import { BidStatus } from '../models/enums/bidStatus';
 
 export async function seedBids(
   dataSource: DataSource,

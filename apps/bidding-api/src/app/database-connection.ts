@@ -41,7 +41,7 @@ export async function checkDatabaseConnection(): Promise<void> {
 import { User } from '../user/entities/user.entity';
 import { Collection } from '../collection/entities/collection.entity';
 import { Bid } from '../bid/entities/bid.entity';
-import { Auth } from '../auth/entities/auth.entity';
+import { Token } from '../token/entities/token.entity';
 
 export const getDataSource = (): DataSource => {
   const config = {
@@ -51,7 +51,7 @@ export const getDataSource = (): DataSource => {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_NAME || 'luxor_bidding',
-    entities: [User, Collection, Bid, Auth],
+    entities: [User, Collection, Bid, Token],
     synchronize: false,
   };
   return new DataSource(config);

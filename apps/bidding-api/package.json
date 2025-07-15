@@ -106,7 +106,6 @@
   },
   "dependencies": {
     "@nestjs/swagger": "^11.2.0",
-    "@luxor-repo/shared": "workspace:*",
     "@faker-js/faker": "^8.4.1",
     "bcryptjs": "^2.4.3"
   },
@@ -114,7 +113,7 @@
     "@types/bcryptjs": "^2.4.6"
   },
   "scripts": {
-    "typeorm": "typeorm-ts-node-commonjs",
+    "typeorm": "TS_NODE_PROJECT=tsconfig.typeorm.json typeorm-ts-node-commonjs",
     "migration:generate": "pnpm run typeorm migration:generate -d typeorm.config.ts",
     "migration:run": "pnpm typeorm migration:run -d typeorm.config.ts",
     "migration:revert": "pnpm typeorm migration:revert -d typeorm.config.ts",

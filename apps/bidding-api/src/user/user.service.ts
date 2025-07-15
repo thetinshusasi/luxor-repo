@@ -35,4 +35,8 @@ export class UserService {
       isDeleted: true,
     });
   }
+
+  findByEmail(email: string) {
+    return this.userRepository.findOne({ where: { email } });
+  }
 }

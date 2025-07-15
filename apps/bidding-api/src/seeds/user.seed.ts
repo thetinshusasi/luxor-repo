@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../user/entities/user.entity';
-import { UserRole } from '@luxor-repo/shared';
+import { UserRole } from '../models/enums/userRole';
 
 const DEFAULT_PASSWORD = '12345';
 const SALT_ROUNDS = 10;

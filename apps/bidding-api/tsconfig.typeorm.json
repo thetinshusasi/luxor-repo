@@ -4,8 +4,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "es2021",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
@@ -13,4 +13,4 @@
   },
   "include": ["src/**/*.ts", "typeorm.config.ts"],
   "exclude": ["node_modules", "dist"]
-} 
+}

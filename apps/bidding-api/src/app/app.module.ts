@@ -12,6 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 import { checkDatabaseConnection, getDataSource } from './database-connection';
 import { comprehensiveSeed } from '../seeds/comprehensive.seed';
 import { cleanDatabase } from '../seeds/cleanDatabase';
+import { TokenModule } from '../token/token.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { cleanDatabase } from '../seeds/cleanDatabase';
     CollectionModule,
     BidModule,
     AuthModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

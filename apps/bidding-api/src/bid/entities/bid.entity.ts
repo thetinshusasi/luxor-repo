@@ -9,13 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-
-// Temporary enum for migration generation
-enum BidStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  REJECTED = 'rejected',
-}
+import { BidStatus } from '../../models/enums/bidStatus';
 
 @Entity()
 export class Bid {
