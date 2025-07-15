@@ -8,7 +8,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Bid } from '../../bid/entities/bid.entity';
 import { UserRole } from '../../models/enums/userRole';
 
 // Temporary enum for migration generation
@@ -108,10 +107,10 @@ export class User {
 
   @ApiProperty({
     description: 'Bids placed by this user',
-    type: () => [Bid],
+    type: () => ['Bid'],
   })
-  @OneToMany(() => Bid, (bid) => bid.user)
-  bids!: Bid[];
+  @OneToMany('Bid', 'user')
+  bids!: any[];
 
   @ApiProperty({
     description: 'Tokens associated with the user',
