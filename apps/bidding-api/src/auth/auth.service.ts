@@ -46,6 +46,7 @@ export class AuthService {
       }
 
       const payload = {
+        userId: user.id,
         email: user.email,
         sub: user.id, // JWT standard uses 'sub' for subject/user ID
         role: user.role,
@@ -61,18 +62,23 @@ export class AuthService {
       );
 
       const decodedToken = this.jwtService.decode(accessToken) as {
+        userId: string;
+        email: string;
         sub: string;
         role: UserRole;
         exp: number;
       };
 
-      if (!user.id) {
+      if (!decodedToken.userId) {
         throw new Error('User ID is required');
       }
 
       // Convert the JWT exp timestamp to a Date object
       const expiresAt = new Date(decodedToken.exp * 1000);
-      
+
+      console.log('========================================');
+      console.log('user', user);
+      console.log('========================================');
 
       const { id } = await this.tokensService.create({
         userId: user.id || '',
@@ -81,7 +87,7 @@ export class AuthService {
       });
       const tokenPayload: ITokenPayload = {
         tokenId: id,
-        userId: decodedToken.sub,
+        // userId: decodedToken.userId,
         email: user.email || '',
         role: decodedToken.role,
         expiresAt: expiresAt,

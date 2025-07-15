@@ -25,7 +25,6 @@ export async function seedCollections(
     const collection: Partial<Collection> = {
       name: faker.commerce.productName(),
       description: faker.commerce.productDescription(),
-      image: faker.image.url({ width: 400, height: 300 }),
       stock: faker.number.int({ min: 1, max: 100 }),
       price: parseFloat(faker.commerce.price({ min: 10, max: 10000 })),
       isDeleted: false,

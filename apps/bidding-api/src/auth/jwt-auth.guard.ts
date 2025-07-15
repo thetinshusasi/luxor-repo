@@ -19,15 +19,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
     const request = context.switchToHttp().getRequest();
     const token = request.headers.authorization.split(' ')[1];
+
     const decodeToken = this.jwtService.decode(token);
     const { userId, exp } = decodeToken;
-
     const latestToken = await this.tokensService.findByUserIdAndToken(
       userId,
       token
     );
-    const currentTime = new Date();
-    if (latestToken && currentTime <= exp) {
+    const currentTimeInSeconds = Math.floor(new Date().getTime() / 1000);
+    if (latestToken && currentTimeInSeconds <= exp) {
       return true;
     }
     return false;
