@@ -296,6 +296,45 @@ The applications load environment variables in the following order (later files 
 - In production, use your deployment platform's environment variable management
 - Regularly rotate JWT secrets and database passwords
 
+## 📦 Database Migrations
+
+The Bidding API uses TypeORM for database migrations. You can generate and run migrations using the following commands (run from the `apps/bidding-api` directory):
+
+### Generate a New Migration
+
+```
+pnpm migration:generate src/migrations/<NewMigrationName>
+```
+
+- Example: `pnpm migration:generate src/migrations/AddNewTable`
+- This will create a new migration file in `apps/bidding-api/src/migrations/`.
+
+### Run Migrations
+
+```
+pnpm migration:run
+```
+
+- This will apply all pending migrations to the database.
+
+### Revert the Last Migration
+
+```
+pnpm migration:revert
+```
+
+- This will undo the most recent migration.
+
+### Show Migration Status
+
+```
+pnpm migration:show
+```
+
+- This will list all migrations and their status.
+
+> **Note:** Ensure your database is running and your environment variables are set correctly before running migrations.
+
 ## Finish your remote caching setup
 
 [Click here to finish setting up your workspace!](https://cloud.nx.app/connect/Wcyg5kW8aW)

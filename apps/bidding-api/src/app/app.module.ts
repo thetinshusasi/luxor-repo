@@ -10,8 +10,7 @@ import { CollectionModule } from '../collection/collection.module';
 import { BidModule } from '../bid/bid.module';
 import { AuthModule } from '../auth/auth.module';
 import { checkDatabaseConnection, getDataSource } from './database-connection';
-import { seedUsers } from '../seeds/user.seed';
-import { DataSource } from 'typeorm';
+import { comprehensiveSeed } from '../seeds/comprehensive.seed';
 import { cleanDatabase } from '../seeds/cleanDatabase';
 
 @Module({
@@ -41,7 +40,7 @@ import { cleanDatabase } from '../seeds/cleanDatabase';
           password: process.env.DB_PASSWORD || 'password',
           database: process.env.DB_NAME || 'luxor_bidding',
           autoLoadEntities: true,
-          synchronize: true, // Disable synchronize for production
+          synchronize: false, // Disable synchronize for production
           migrations: ['src/migrations/*.ts'],
           migrationsRun: true, // Run migrations automatically
         };
@@ -58,17 +57,18 @@ import { cleanDatabase } from '../seeds/cleanDatabase';
   providers: [AppService],
 })
 export class AppModule implements OnModuleInit {
-  private dataSource: DataSource;
   constructor() {
     // Check database connection when the module is initialized
-    this.dataSource = getDataSource();
   }
 
   async onModuleInit() {
     await checkDatabaseConnection();
 
-    // await cleanDatabase(this.dataSource);
-    await seedUsers(this.dataSource);
+    if (process.env.NODE_ENV === 'development') {
+      const dataSource = getDataSource();
+      await cleanDatabase(dataSource);
+      await comprehensiveSeed(dataSource);
+    }
   }
 
   configure(consumer: MiddlewareConsumer) {

@@ -2,10 +2,6 @@ import { DataSource } from 'typeorm';
 
 export async function checkDatabaseConnection(): Promise<void> {
   try {
-    console.log('Process env:', process.env);
-    console.log('==============================================');
-    console.log('==============================================');
-
     const dataSource = getDataSource();
 
     // Try to initialize the connection
@@ -42,6 +38,11 @@ export async function checkDatabaseConnection(): Promise<void> {
   }
 }
 
+import { User } from '../user/entities/user.entity';
+import { Collection } from '../collection/entities/collection.entity';
+import { Bid } from '../bid/entities/bid.entity';
+import { Auth } from '../auth/entities/auth.entity';
+
 export const getDataSource = (): DataSource => {
   const config = {
     type: 'postgres' as const,
@@ -50,6 +51,8 @@ export const getDataSource = (): DataSource => {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_NAME || 'luxor_bidding',
+    entities: [User, Collection, Bid, Auth],
+    synchronize: false,
   };
   return new DataSource(config);
 };

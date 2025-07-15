@@ -55,17 +55,17 @@ export class Collection {
 
   @ApiProperty({
     description: 'Timestamp when the collection was created',
-    example: 1640995200000,
+    example: '2023-01-01T00:00:00.000Z',
   })
-  @CreateDateColumn({ type: 'bigint' })
-  createdAt!: number;
+  @CreateDateColumn({ type: 'timestamp', default: () => 'now()' })
+  createdAt!: Date;
 
   @ApiProperty({
     description: 'Timestamp when the collection was last updated',
-    example: 1640995200000,
+    example: '2023-01-01T00:00:00.000Z',
   })
-  @UpdateDateColumn({ type: 'bigint' })
-  updatedAt!: number;
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'now()' })
+  updatedAt!: Date;
 
   @ApiProperty({
     description:
@@ -73,8 +73,8 @@ export class Collection {
     example: null,
     required: false,
   })
-  @DeleteDateColumn({ type: 'bigint' })
-  deletedAt?: number;
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deletedAt?: Date;
 
   @ApiProperty({
     description: 'Whether the collection is marked as deleted',

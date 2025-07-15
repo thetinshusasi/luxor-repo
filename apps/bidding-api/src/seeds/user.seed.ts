@@ -7,7 +7,7 @@ import { UserRole } from '@luxor-repo/shared';
 const DEFAULT_PASSWORD = '12345';
 const SALT_ROUNDS = 10;
 
-export async function seedUsers(dataSource: DataSource): Promise<void> {
+export async function seedUsers(dataSource: DataSource): Promise<User[]> {
   const userRepository = dataSource.getRepository(User);
 
   // Check if we're in development mode
@@ -15,7 +15,7 @@ export async function seedUsers(dataSource: DataSource): Promise<void> {
 
   if (isDevelopment) {
     console.log('🔄 Dropping all users from database...');
-    await userRepository.clear();
+    await userRepository.deleteAll();
     console.log('✅ Database cleared');
   }
 
@@ -25,7 +25,7 @@ export async function seedUsers(dataSource: DataSource): Promise<void> {
     console.log(
       `⚠️  ${existingUsers} users already exist in database. Skipping seed.`
     );
-    return;
+    return await userRepository.find();
   }
 
   console.log('🌱 Starting user seed...');
@@ -68,4 +68,6 @@ export async function seedUsers(dataSource: DataSource): Promise<void> {
       }`
     );
   });
+
+  return createdUsers;
 }
