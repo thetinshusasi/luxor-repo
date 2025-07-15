@@ -1,4 +1,40 @@
 import { DataSource } from 'typeorm';
+import { User } from '../user/entities/user.entity';
+import { Collection } from '../collection/entities/collection.entity';
+import { Bid } from '../bid/entities/bid.entity';
+
+async function clearBids(dataSource: DataSource): Promise<void> {
+  try {
+    console.log('🗑️  Clearing bids...');
+    const bidRepository = dataSource.getRepository(Bid);
+    await bidRepository.deleteAll();
+    console.log('✅ Cleared bids');
+  } catch (error: any) {
+    console.error('❌ Failed to clear bids:', error.message);
+  }
+}
+
+async function clearCollections(dataSource: DataSource): Promise<void> {
+  try {
+    console.log('🗑️  Clearing collections...');
+    const collectionRepository = dataSource.getRepository(Collection);
+    await collectionRepository.deleteAll();
+    console.log('✅ Cleared collections');
+  } catch (error: any) {
+    console.error('❌ Failed to clear collections:', error.message);
+  }
+}
+
+async function clearUsers(dataSource: DataSource): Promise<void> {
+  try {
+    console.log('🗑️  Clearing users...');
+    const userRepository = dataSource.getRepository(User);
+    await userRepository.deleteAll();
+    console.log('✅ Cleared users');
+  } catch (error: any) {
+    console.error('❌ Failed to clear users:', error.message);
+  }
+}
 
 export const cleanDatabase = async (dataSource: DataSource): Promise<void> => {
   try {
@@ -13,31 +49,9 @@ export const cleanDatabase = async (dataSource: DataSource): Promise<void> => {
 
     // Clear tables in the correct order to handle foreign key constraints
     // Clear child tables first, then parent tables (bid references user and collection)
-    const tablesToClear = ['bid', 'collection', 'user'];
-
-    for (const tableName of tablesToClear) {
-      try {
-        // Check if table exists
-        const tableExists = await dataSource.query(
-          `SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name = $1
-          )`,
-          [tableName]
-        );
-
-        if (tableExists[0].exists) {
-          // Clear all data from the table with CASCADE to handle foreign keys
-          await dataSource.query(`TRUNCATE TABLE "${tableName}" CASCADE`);
-          console.log(`✅ Cleared data from table: ${tableName}`);
-        } else {
-          console.log(`⚠️  Table ${tableName} does not exist, skipping...`);
-        }
-      } catch (error: any) {
-        console.error(`❌ Failed to clear table ${tableName}:`, error.message);
-      }
-    }
+    await clearBids(dataSource);
+    await clearCollections(dataSource);
+    await clearUsers(dataSource);
 
     console.log('✅ Database tables cleared successfully (schema preserved)');
   } catch (error: any) {
