@@ -5,6 +5,7 @@ import {
   IsUUID,
   Min,
   Max,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateCollectionDto {
@@ -25,19 +26,19 @@ export class CreateCollectionDto {
   @ApiProperty({
     description: 'ID of the user who owns the collection',
     example: '123e4567-e89b-12d3-a456-426614174002',
+    required: false,
   })
   @IsUUID()
-  userId!: string;
+  @IsOptional()
+  userId?: string;
 
   @ApiProperty({
     description: 'Number of items in stock for this collection',
     example: 50,
     minimum: 1,
-    maximum: 1000,
   })
   @IsNumber()
   @Min(1)
-  @Max(1000)
   stock!: number;
 
   @ApiProperty({

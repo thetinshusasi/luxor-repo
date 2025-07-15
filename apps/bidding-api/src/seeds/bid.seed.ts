@@ -42,11 +42,7 @@ export async function seedBids(
         collectionId: collection.id,
         userId: randomUser.id,
         price: parseFloat(bidPrice.toFixed(2)),
-        status: faker.helpers.arrayElement([
-          BidStatus.PENDING,
-          BidStatus.ACCEPTED,
-          BidStatus.REJECTED,
-        ]),
+        status: BidStatus.PENDING,
         isDeleted: false,
       };
 
