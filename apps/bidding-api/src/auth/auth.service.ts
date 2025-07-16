@@ -36,10 +36,8 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     try {
       const { email, password } = loginDto;
-      console.log('🔍 Login attempt for email:', email);
 
       const user = await this.validateUser(email, password);
-      console.log('🔍 User validation result:', user ? 'SUCCESS' : 'FAILED');
 
       if (!user) {
         throw new UnauthorizedException('Invalid credentials');
@@ -51,16 +49,9 @@ export class AuthService {
         sub: user.id, // JWT standard uses 'sub' for subject/user ID
         role: user.role,
       };
-      console.log('🔍 JWT Payload:', payload);
-      console.log('🔍 JWT Service instance:', this.jwtService);
-      console.log('🔍 About to sign JWT...');
-
+     
       const accessToken = this.jwtService.sign(payload);
-      console.log(
-        '🔍 JWT Token created successfully:',
-        accessToken.substring(0, 50) + '...'
-      );
-
+    
       const decodedToken = this.jwtService.decode(accessToken) as {
         userId: string;
         email: string;
@@ -76,10 +67,7 @@ export class AuthService {
       // Convert the JWT exp timestamp to a Date object
       const expiresAt = new Date(decodedToken.exp * 1000);
 
-      console.log('========================================');
-      console.log('user', user);
-      console.log('========================================');
-
+   
       const { id } = await this.tokensService.create({
         userId: user.id || '',
         token: accessToken,
@@ -96,11 +84,8 @@ export class AuthService {
 
       return tokenPayload;
     } catch (error) {
-      console.error('❌ Error during login:', error);
-      console.error(
-        '❌ Error stack:',
-        error instanceof Error ? error.stack : 'Unknown error'
-      );
+      this.logger.error('❌ Error during login:', error);
+     
       throw new Error('Login failed');
     }
   }

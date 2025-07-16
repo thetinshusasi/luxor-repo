@@ -13,6 +13,7 @@ import {
   NotFoundException,
   Request,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CollectionService } from './collection.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
@@ -80,7 +81,7 @@ export class CollectionController {
       );
 
       if (!collection) {
-        throw new InternalServerErrorException('Failed to create collection');
+        throw new NotFoundException('Failed to create collection');
       }
 
       return collection;
@@ -129,12 +130,8 @@ export class CollectionController {
     @Query('limit') limit = 10
   ): Promise<CollectionListDto> {
     try {
-      console.log('========================================');
-      console.log('page', page);
-      console.log('limit', limit);
-      console.log('========================================');
       if (page < 1 || limit < 1) {
-        throw new InternalServerErrorException(
+        throw new BadRequestException(
           'Page and limit must be positive numbers'
         );
       }
@@ -146,9 +143,7 @@ export class CollectionController {
       );
 
       if (!collectionDtos) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve collections'
-        );
+        throw new NotFoundException('Failed to retrieve collections');
       }
 
       return collectionDtos;
@@ -181,7 +176,7 @@ export class CollectionController {
     try {
       const userId = req.context.userId;
       if (!userId || userId.trim() === '') {
-        throw new NotFoundException('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
       if (page < 1 || limit < 1) {
         throw new BadRequestException(
@@ -196,9 +191,7 @@ export class CollectionController {
       );
 
       if (!collections) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve collections for user'
-        );
+        throw new NotFoundException('Failed to retrieve collections for user');
       }
 
       return collections;
@@ -253,7 +246,7 @@ export class CollectionController {
     try {
       const { userId } = req.context;
       if (!userId || userId.trim() === '') {
-        throw new NotFoundException('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
       if (page < 1 || limit < 1) {
         throw new BadRequestException(
@@ -269,7 +262,7 @@ export class CollectionController {
         );
 
       if (!collections) {
-        throw new InternalServerErrorException(
+        throw new NotFoundException(
           'Failed to retrieve collections for users except current user'
         );
       }
@@ -290,13 +283,6 @@ export class CollectionController {
           'Error fetching all collections for user'
         );
       }
-      this.logger.error(
-        `Error fetching all collections for user ${req.context.userId}`,
-        error
-      );
-      throw new InternalServerErrorException(
-        'Error fetching all collections for user'
-      );
     }
   }
 
@@ -317,15 +303,13 @@ export class CollectionController {
   ): Promise<CollectionDto[]> {
     try {
       if (!userId || userId.trim() === '') {
-        throw new NotFoundException('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
 
       const collections = await this.collectionService.findByUserId(userId);
 
       if (!collections) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve collections for user'
-        );
+        throw new NotFoundException('Failed to retrieve collections for user');
       }
 
       return collections;
@@ -361,7 +345,7 @@ export class CollectionController {
   ): Promise<BidDto[]> {
     try {
       if (!collectionId || collectionId.trim() === '') {
-        throw new NotFoundException('Collection ID is required');
+        throw new BadRequestException('Collection ID is required');
       }
 
       const bids = await this.collectionService.getAllBidsByCollectionId(
@@ -370,9 +354,7 @@ export class CollectionController {
       );
 
       if (!bids) {
-        throw new InternalServerErrorException(
-          'Failed to retrieve bids for collection'
-        );
+        throw new NotFoundException('Failed to retrieve bids for collection');
       }
 
       return bids;
@@ -448,7 +430,7 @@ export class CollectionController {
   ): Promise<CollectionDto> {
     try {
       if (!id || id.trim() === '') {
-        throw new NotFoundException('Collection ID is required');
+        throw new BadRequestException('Collection ID is required');
       }
 
       const collection = await this.collectionService.findOne(
@@ -462,7 +444,10 @@ export class CollectionController {
 
       return collection;
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       this.logger.error(`Error fetching collection with ID ${id}`, error);
@@ -489,14 +474,14 @@ export class CollectionController {
   ): Promise<CollectionDto> {
     try {
       if (!id || id.trim() === '') {
-        throw new NotFoundException('Collection ID is required');
+        throw new BadRequestException('Collection ID is required');
       }
 
       if (
         !updateCollectionDto ||
         Object.keys(updateCollectionDto).length === 0
       ) {
-        throw new InternalServerErrorException('Update data is required');
+        throw new BadRequestException('Update data is required');
       }
 
       const updatedCollection = await this.collectionService.update(
@@ -540,7 +525,7 @@ export class CollectionController {
   ): Promise<CollectionDto> {
     try {
       if (!id || id.trim() === '') {
-        throw new NotFoundException('Collection ID is required');
+        throw new BadRequestException('Collection ID is required');
       }
 
       const deletedCollection = await this.collectionService.remove(
@@ -583,11 +568,11 @@ export class CollectionController {
         !acceptBidDto.collectionId ||
         acceptBidDto.collectionId.trim() === ''
       ) {
-        throw new NotFoundException('Collection ID is required');
+        throw new BadRequestException('Collection ID is required');
       }
 
       if (!acceptBidDto.bidId || acceptBidDto.bidId.trim() === '') {
-        throw new NotFoundException('Bid ID is required');
+        throw new BadRequestException('Bid ID is required');
       }
 
       // check if the collection owner is the same as the user who is accepting the bid
@@ -601,7 +586,7 @@ export class CollectionController {
 
       // Verify that the current user is the owner of the collection
       if (!collection.isOwner) {
-        throw new NotFoundException(
+        throw new UnauthorizedException(
           'You can only accept bids for your own collections'
         );
       }
@@ -613,9 +598,7 @@ export class CollectionController {
       );
 
       if (!acceptedBid) {
-        throw new InternalServerErrorException(
-          'Failed to accept bid for collection'
-        );
+        throw new NotFoundException('Failed to accept bid for collection');
       }
 
       return acceptedBid;
