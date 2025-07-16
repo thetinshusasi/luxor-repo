@@ -1,4 +1,4 @@
-import { CollectionBid } from '@/lib/hooks/useApi';
+import { CollectionBid } from './collectionBid';
 
 export interface CollectionBids {
   collectionId: string;
