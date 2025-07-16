@@ -54,7 +54,6 @@ export interface CreateCollectionData {
   price: number;
 }
 
-
 export interface UpdateCollectionData {
   name?: string;
   description?: string;
@@ -73,6 +72,7 @@ export interface UpdateBidData {
 
 export interface AcceptBidData {
   bidId: string;
+  collectionId: string;
 }
 
 export interface CollectionResponse {
@@ -172,6 +172,20 @@ export const useUserCollections = (page = 1, limit = 10) => {
     queryKey: [...queryKeys.collections, 'user'],
     queryFn: () =>
       apiCall(`/collections/userCollections?page=${page}&limit=${limit}`),
+    staleTime: 30 * 1000,
+  });
+};
+
+export const useAllUserCollectionExcludeCurrentUser = (
+  page = 1,
+  limit = 10
+) => {
+  return useQuery({
+    queryKey: [...queryKeys.collections, 'allUserCollectionExcludeCurrentUser'],
+    queryFn: () =>
+      apiCall(
+        `/collections/allUserCollectionsExcludeCurrentUser?page=${page}&limit=${limit}`
+      ),
     staleTime: 30 * 1000,
   });
 };
@@ -277,6 +291,15 @@ export const useCreateBid = () => {
         queryKey: queryKeys.collection(collectionId),
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.collections,
+          'allUserCollectionExcludeCurrentUser',
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['bids', 'allBidsByCollectionIds'],
+      });
     },
   });
 };
@@ -292,6 +315,16 @@ export const useUpdateBid = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bids'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collections });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.collections,
+          'allUserCollectionExcludeCurrentUser',
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['bids', 'allBidsByCollectionIds'],
+      });
     },
   });
 };
@@ -301,13 +334,22 @@ export const useAcceptBid = () => {
 
   return useMutation({
     mutationFn: (data: AcceptBidData) =>
-      apiCall('/collections/acceptBid', {
+      apiCall('/collections/accept-bid', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
       queryClient.invalidateQueries({ queryKey: ['bids'] });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.collections,
+          'allUserCollectionExcludeCurrentUser',
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['bids', 'allBidsByCollectionIds'],
+      });
     },
   });
 };
@@ -316,14 +358,47 @@ export const useRejectBid = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bidId }: { bidId: string }) =>
-      apiCall(`/bids/${bidId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: BidStatus.REJECTED }),
+    mutationFn: (rejectBidData: AcceptBidData) =>
+      apiCall(`/collections/reject-bid`, {
+        method: 'POST',
+        body: JSON.stringify(rejectBidData),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
       queryClient.invalidateQueries({ queryKey: ['bids'] });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.collections,
+          'allUserCollectionExcludeCurrentUser',
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['bids', 'allBidsByCollectionIds'],
+      });
+    },
+  });
+};
+
+export const useDeleteBid = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bidId: string) =>
+      apiCall(`/bids/${bidId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.collections });
+      queryClient.invalidateQueries({ queryKey: ['bids'] });
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queryKeys.collections,
+          'allUserCollectionExcludeCurrentUser',
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['bids', 'allBidsByCollectionIds'],
+      });
     },
   });
 };
