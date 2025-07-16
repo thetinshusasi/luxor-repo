@@ -153,6 +153,30 @@ export class CollectionService {
     return collectionListDto;
   }
 
+  async getAllCollectionsByExcludeCurrentUser(
+    userId: string,
+    page: number,
+    limit: number
+  ): Promise<CollectionListDto> {
+    const totalCount = await this.collectionRepository.count({
+      where: { userId: Not(userId), isDeleted: false },
+    });
+    const collections = await this.collectionRepository.find({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: { userId: Not(userId), isDeleted: false },
+    });
+    const collectionListDto: CollectionListDto = {
+      data: collections.map((collection: Collection) =>
+        convertCollectionEnitityToCollectionDto(collection, userId)
+      ),
+      pageSize: limit,
+      page,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+    return collectionListDto;
+  }
+
   async getAllBidsByCollectionId(
     collectionId: string,
     userId: string
@@ -205,6 +229,34 @@ export class CollectionService {
       }
 
       return convertBidEntityToBidDto(acceptedBid, userId);
+    });
+  }
+
+  async rejectBidByCollectionId(
+    collectionId: string,
+    bidId: string,
+    userId: string
+  ): Promise<BidDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const bid = await manager.findOne(Bid, {
+        where: { id: bidId, collectionId, isDeleted: false },
+      });
+      if (!bid) {
+        throw new NotFoundException('Bid not found');
+      }
+      await manager.update(Bid, bidId, {
+        status: BidStatus.REJECTED,
+      });
+
+      const rejectedBid = await manager.findOne(Bid, {
+        where: { id: bidId },
+      });
+
+      if (!rejectedBid) {
+        throw new NotFoundException('Rejected bid not found');
+      }
+
+      return convertBidEntityToBidDto(rejectedBid, userId);
     });
   }
 

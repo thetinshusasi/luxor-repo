@@ -20,6 +20,7 @@ import { UpdateCollectionDto } from './dto/update-collection.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -95,6 +96,24 @@ export class CollectionController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get all collections' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10)',
+  })
+  @ApiQuery({
+    name: 'excludeCurrentUser',
+    required: false,
+    type: Boolean,
+    description: 'Exclude collections owned by current user (default: false)',
+  })
   @ApiResponse({
     status: 200,
     description: 'The collections have been successfully retrieved.',
@@ -189,6 +208,87 @@ export class CollectionController {
         error instanceof InternalServerErrorException
       ) {
         throw error;
+      }
+      this.logger.error(
+        `Error fetching all collections for user ${req.context.userId}`,
+        error
+      );
+      throw new InternalServerErrorException(
+        'Error fetching all collections for user'
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('allUserCollectionsExcludeCurrentUser')
+  @ApiOperation({
+    summary: 'Get all collections by all users except current user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The collections have been successfully retrieved.',
+    type: [Collection],
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10)',
+  })
+  async getAllCollectionsByExcludeCurrentUser(
+    @Request() req: { context: IRequestContext },
+    @Query('page') page = 1,
+    @Query('limit') limit = 10
+  ): Promise<CollectionListDto> {
+    try {
+      const { userId } = req.context;
+      if (!userId || userId.trim() === '') {
+        throw new NotFoundException('User ID is required');
+      }
+      if (page < 1 || limit < 1) {
+        throw new BadRequestException(
+          'Page and limit must be positive numbers'
+        );
+      }
+
+      const collections =
+        await this.collectionService.getAllCollectionsByExcludeCurrentUser(
+          userId,
+          page,
+          limit
+        );
+
+      if (!collections) {
+        throw new InternalServerErrorException(
+          'Failed to retrieve collections for users except current user'
+        );
+      }
+
+      return collections;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      } else {
+        this.logger.error(
+          `Error fetching all collections for user ${req.context.userId}`,
+          error
+        );
+        throw new InternalServerErrorException(
+          'Error fetching all collections for user'
+        );
       }
       this.logger.error(
         `Error fetching all collections for user ${req.context.userId}`,
@@ -532,6 +632,63 @@ export class CollectionController {
       );
       throw new InternalServerErrorException(
         'Error accepting bid for collection'
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('reject-bid')
+  @ApiOperation({ summary: 'Reject a bid for a collection' })
+  @ApiResponse({
+    status: 200,
+    description: 'The bid has been successfully rejected.',
+    type: BidDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request',
+  })
+  async rejectBidByCollectionId(
+    @Body() rejectBidDto: AcceptBidDto,
+    @Request() req: { context: IRequestContext }
+  ): Promise<BidDto> {
+    try {
+      if (
+        !rejectBidDto.collectionId ||
+        rejectBidDto.collectionId.trim() === ''
+      ) {
+        throw new BadRequestException('Collection ID is required');
+      }
+
+      if (!rejectBidDto.bidId || rejectBidDto.bidId.trim() === '') {
+        throw new BadRequestException('Bid ID is required');
+      }
+      const { userId } = req.context;
+
+      const rejectedBid = await this.collectionService.rejectBidByCollectionId(
+        rejectBidDto.collectionId,
+        rejectBidDto.bidId,
+        userId
+      );
+
+      if (!rejectedBid) {
+        throw new NotFoundException('Bid not found');
+      }
+
+      return rejectedBid;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      }
+      this.logger.error(
+        `Error rejecting bid ${rejectBidDto.bidId} for collection ${rejectBidDto.collectionId}`,
+        error
+      );
+      throw new InternalServerErrorException(
+        'Error rejecting bid for collection'
       );
     }
   }

@@ -358,6 +358,31 @@
       }
     },
     {
+      "name": "11. Reject Bid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"collectionId\": \"{{collection_id}}\",\n    \"bidId\": \"{{bid_id}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/collections/reject-bid",
+          "host": ["{{base_url}}"],
+          "path": ["collections", "reject-bid"]
+        }
+      }
+    },
+    {
       "name": "Additional Endpoints",
       "item": [
         {
@@ -418,6 +443,33 @@
               "raw": "{{base_url}}/collections/user/{{user_id}}",
               "host": ["{{base_url}}"],
               "path": ["collections", "user", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Collections Excluding Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/collections/allUserCollectionsExcludeCurrentUser?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["collections", "allUserCollectionsExcludeCurrentUser"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
             }
           }
         },
