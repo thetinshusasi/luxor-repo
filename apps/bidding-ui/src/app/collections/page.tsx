@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, ChevronRight, Plus, User, Check, X, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { useCollections, useAcceptBid, useRejectBid, useDeleteBid, Collection, BidStatus, useAllBidsByCollectionIds, CollectionBid, useAllUserCollectionExcludeCurrentUser } from "@/lib/hooks/useApi";
+import { useAcceptBid, useRejectBid, useDeleteBid, Collection, BidStatus, useAllBidsByCollectionIds, CollectionBid, useAllUserCollectionExcludeCurrentUser } from "@/lib/hooks/useApi";
 import { CollectionBids } from "@/lib/models/interfaces/collectionBids";
 
 export default function CollectionsPage() {
@@ -27,13 +26,10 @@ export default function CollectionsPage() {
     const deleteBidMutation = useDeleteBid();
     const { data: {
         data: collectionsData = [],
-        pageSize,
-        page,
         totalPages,
     } = {}, isLoading: collectionsLoading, error: collectionsError, refetch: collectionsRefetch } = useAllUserCollectionExcludeCurrentUser(currentPage, itemsPerPage);
 
-    const { data: allBidsByCollectionIdsData,
-        isLoading: allBidsByCollectionIdsLoading, error: allBidsByCollectionIdsError } = useAllBidsByCollectionIds(collectionsData.map((collection: Collection) => collection.id));
+    const { data: allBidsByCollectionIdsData, } = useAllBidsByCollectionIds(collectionsData.map((collection: Collection) => collection.id));
 
     const collectionIdAndBidsMap = new Map<string, CollectionBid[]>();
     allBidsByCollectionIdsData?.forEach((collectionBidList: CollectionBids) => {

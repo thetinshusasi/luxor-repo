@@ -49,7 +49,7 @@ export const useUserCollections = (
 export const useAllUserCollectionExcludeCurrentUser = (
   page = 1,
   limit = 10
-): UseQueryResult<Collection[], Error> => {
+) => {
   return useQuery({
     queryKey: [...queryKeys.collections, 'allUserCollectionExcludeCurrentUser'],
     queryFn: () =>

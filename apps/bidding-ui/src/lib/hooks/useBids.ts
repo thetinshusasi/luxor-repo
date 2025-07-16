@@ -6,7 +6,13 @@ import {
   UseMutationResult,
 } from '@tanstack/react-query';
 import { apiCall, queryKeys } from './api';
-import { CreateBidData, UpdateBidData, AcceptBidData, Bid } from './types';
+import {
+  CreateBidData,
+  UpdateBidData,
+  AcceptBidData,
+  Bid,
+  CollectionBids,
+} from './types';
 
 export const useBids = (collectionId: string): UseQueryResult<Bid[], Error> => {
   return useQuery({
@@ -29,7 +35,7 @@ export const useAllBids = (
 
 export const useAllBidsByCollectionIds = (
   collectionIds: string[]
-): UseQueryResult<Bid[], Error> => {
+): UseQueryResult<CollectionBids[], Error> => {
   return useQuery({
     queryKey: ['bids', 'allBidsByCollectionIds', collectionIds],
     queryFn: () =>
