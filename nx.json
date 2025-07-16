@@ -54,7 +54,7 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/bidding-api-e2e/**/*"]
+      "exclude": []
     },
     {
       "plugin": "@nx/next/plugin",
