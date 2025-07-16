@@ -155,3 +155,7 @@ The app uses JWT authentication. Login credentials are seeded in the database on
 - Database is reset and reseeded on each API restart
 - All API endpoints require authentication except `/auth/login`
 - Frontend automatically redirects to login if not authenticated
+
+## 🧪 Testing
+
+**<span style="color: #FFD600;">Currently unit tests are not implemented due to time crunch. However, for frontend we primarily use React Testing Library and backend we use Mocha and Chai, and for e2e we use Cypress or Playwright.</span>**
