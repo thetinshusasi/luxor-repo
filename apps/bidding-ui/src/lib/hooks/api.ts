@@ -1,5 +1,5 @@
 // API base URL - update this to match your backend
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // Helper function for API calls with authentication

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from './api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -74,8 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-        }/auth/login`,
+        `${API_BASE_URL}/auth/login`,
         {
           method: 'POST',
           headers: {
