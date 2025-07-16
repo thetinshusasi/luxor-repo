@@ -11,6 +11,7 @@ import { Bid } from '../bid/entities/bid.entity';
 import { BidDto } from '../bid/dto/bid.dto';
 import { convertBidEntityToBidDto } from '../common/utils/convertBidEnitityToBidDto';
 import { BidStatus } from '../models/enums/bidStatus';
+import { CollectionListDto } from './dto/collection-list.dto';
 
 @Injectable()
 export class CollectionService {
@@ -30,15 +31,24 @@ export class CollectionService {
     page: number,
     limit: number,
     userId: string
-  ): Promise<CollectionDto[]> {
+  ): Promise<CollectionListDto> {
+    const totalCount = await this.collectionRepository.count({
+      where: { isDeleted: false },
+    });
     const collections = await this.collectionRepository.find({
       skip: (page - 1) * limit,
       take: limit,
       where: { isDeleted: false }, // Only show non-deleted collections
     });
-    return collections.map((collection: Collection) =>
-      convertCollectionEnitityToCollectionDto(collection, userId)
-    );
+    const collectionListDto: CollectionListDto = {
+      data: collections.map((collection: Collection) =>
+        convertCollectionEnitityToCollectionDto(collection, userId)
+      ),
+      pageSize: limit,
+      page,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+    return collectionListDto;
   }
 
   async findOne(id: string, userId: string): Promise<CollectionDto> {
@@ -118,13 +128,28 @@ export class CollectionService {
     });
   }
 
-  async getAllCollectionByUserId(userId: string): Promise<CollectionDto[]> {
-    const collections = await this.collectionRepository.find({
+  async getAllCollectionByUserId(
+    userId: string,
+    page: number,
+    limit: number
+  ): Promise<CollectionListDto> {
+    const totalCount = await this.collectionRepository.count({
       where: { userId, isDeleted: false },
     });
-    return collections.map((collection: Collection) =>
-      convertCollectionEnitityToCollectionDto(collection, userId)
-    );
+    const collections = await this.collectionRepository.find({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: { userId, isDeleted: false },
+    });
+    const collectionListDto: CollectionListDto = {
+      data: collections.map((collection: Collection) =>
+        convertCollectionEnitityToCollectionDto(collection, userId)
+      ),
+      pageSize: limit,
+      page,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+    return collectionListDto;
   }
 
   async getAllBidsByCollectionId(

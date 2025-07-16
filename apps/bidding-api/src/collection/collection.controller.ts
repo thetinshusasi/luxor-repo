@@ -31,6 +31,7 @@ import { IRequestContext } from '../models/interfaces/request-context';
 import { CollectionDto } from './dto/collection.dto';
 import { BidDto } from '../bid/dto/bid.dto';
 import { AcceptBidDto } from './dto/accept-bid.dto';
+import { CollectionListDto } from './dto/collection-list.dto';
 
 @ApiTags('Collections')
 @ApiBearerAuth('access-token')
@@ -106,7 +107,7 @@ export class CollectionController {
     @Request() req: { context: IRequestContext },
     @Query('page') page = 1,
     @Query('limit') limit = 10
-  ): Promise<CollectionDto[]> {
+  ): Promise<CollectionListDto> {
     try {
       console.log('========================================');
       console.log('page', page);
@@ -153,16 +154,25 @@ export class CollectionController {
     description: 'Bad Request',
   })
   async getAllCollectionByUserId(
-    @Request() req: { context: IRequestContext }
-  ): Promise<CollectionDto[]> {
+    @Request() req: { context: IRequestContext },
+    @Query('page') page = 1,
+    @Query('limit') limit = 10
+  ): Promise<CollectionListDto> {
     try {
       const userId = req.context.userId;
       if (!userId || userId.trim() === '') {
         throw new NotFoundException('User ID is required');
       }
+      if (page < 1 || limit < 1) {
+        throw new BadRequestException(
+          'Page and limit must be positive numbers'
+        );
+      }
 
       const collections = await this.collectionService.getAllCollectionByUserId(
-        userId
+        userId,
+        page,
+        limit
       );
 
       if (!collections) {
