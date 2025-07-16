@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Not, DataSource } from 'typeorm';
+import { Not, DataSource, In } from 'typeorm';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { Collection } from './entities/collection.entity';
@@ -12,6 +12,7 @@ import { BidDto } from '../bid/dto/bid.dto';
 import { convertBidEntityToBidDto } from '../common/utils/convertBidEnitityToBidDto';
 import { BidStatus } from '../models/enums/bidStatus';
 import { CollectionListDto } from './dto/collection-list.dto';
+import { CollectionBidListDto } from './dto/collection-bid-list.dto';
 
 @Injectable()
 export class CollectionService {
@@ -205,5 +206,38 @@ export class CollectionService {
 
       return convertBidEntityToBidDto(acceptedBid, userId);
     });
+  }
+
+  async getAllBidsByCollectionIds(
+    collectionIds: string[],
+    userId: string
+  ): Promise<CollectionBidListDto[]> {
+    // Get all bids for the specified collections (not filtered by userId to get all bids)
+    const bids = await this.bidRepository.find({
+      where: { collectionId: In(collectionIds), isDeleted: false },
+    });
+
+    // Group bids by collectionId using Map for O(1) lookup
+    const bidsByCollection = new Map<string, Bid[]>();
+
+    // Initialize all collection IDs with empty arrays
+    collectionIds.forEach((collectionId) => {
+      bidsByCollection.set(collectionId, []);
+    });
+
+    // Group existing bids by collectionId
+    bids.forEach((bid) => {
+      const existingBids = bidsByCollection.get(bid.collectionId) || [];
+      existingBids.push(bid);
+      bidsByCollection.set(bid.collectionId, existingBids);
+    });
+
+    // Convert to DTO format
+    return collectionIds.map((collectionId) => ({
+      collectionId,
+      bids: (bidsByCollection.get(collectionId) || []).map((bid) =>
+        convertBidEntityToBidDto(bid, userId)
+      ),
+    }));
   }
 }

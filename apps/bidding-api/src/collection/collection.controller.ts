@@ -32,6 +32,7 @@ import { CollectionDto } from './dto/collection.dto';
 import { BidDto } from '../bid/dto/bid.dto';
 import { AcceptBidDto } from './dto/accept-bid.dto';
 import { CollectionListDto } from './dto/collection-list.dto';
+import { CollectionBidListDto } from './dto/collection-bid-list.dto';
 
 @ApiTags('Collections')
 @ApiBearerAuth('access-token')
@@ -288,6 +289,43 @@ export class CollectionController {
       );
       throw new InternalServerErrorException(
         'Error fetching bids for collection'
+      );
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('allBidsByCollectionIds')
+  @ApiOperation({ summary: 'Get all bids for a list of collections ids' })
+  @ApiResponse({
+    status: 200,
+    description: 'The bids have been successfully retrieved.',
+    type: [CollectionBidListDto],
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request',
+  })
+  getAllBidsByCollectionIds(
+    @Body() body: { collectionIds: string[] },
+    @Request() req: { context: IRequestContext }
+  ): Promise<CollectionBidListDto[]> {
+    try {
+      if (!body.collectionIds || body.collectionIds.length === 0) {
+        throw new BadRequestException('Collection IDs are required');
+      }
+      const { collectionIds } = body;
+      const { userId } = req.context;
+      return this.collectionService.getAllBidsByCollectionIds(
+        collectionIds,
+        userId
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error('Error fetching bids by collection IDs', error);
+      throw new InternalServerErrorException(
+        'Error fetching bids by collection IDs'
       );
     }
   }
