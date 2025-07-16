@@ -2,7 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Logger } from 'nestjs-pino';
 
-@Controller()
+@Controller('health')
 export class AppController {
   constructor(
     private readonly appService: AppService,

@@ -341,7 +341,9 @@ pnpm migration:show
 
 ## Run tasks
 
-To run the dev server for your app, use:
+### Bidding API
+
+To run the dev server for your API, use:
 
 ```sh
 npx nx serve bidding-api
@@ -353,10 +355,54 @@ To create a production bundle:
 npx nx build bidding-api
 ```
 
-To see all available targets to run for a project, run:
+To see all available targets to run for the API project, run:
 
 ```sh
 npx nx show project bidding-api
+```
+
+### Bidding UI
+
+To run the development server for the frontend application:
+
+```sh
+npx nx serve bidding-ui
+```
+
+This will start the Next.js development server, typically on `http://localhost:3000`.
+
+To create a production build:
+
+```sh
+npx nx build bidding-ui
+```
+
+To see all available targets for the UI project:
+
+```sh
+npx nx show project bidding-ui
+```
+
+### Running Both Applications
+
+For a full development setup with database, API, and UI:
+
+```sh
+# Start database and both applications
+npx nx run bidding-api:dev-full
+```
+
+Or run them individually:
+
+```sh
+# Terminal 1: Start database
+npx nx run bidding-api:db-up
+
+# Terminal 2: Start API
+npx nx serve bidding-api
+
+# Terminal 3: Start UI
+npx nx serve bidding-ui
 ```
 
 These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
