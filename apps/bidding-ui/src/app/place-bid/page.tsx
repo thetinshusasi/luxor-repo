@@ -8,24 +8,61 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCreateBid } from "@/lib/hooks/useApi";
+import { toast } from "@/hooks/use-toast";
 
 export default function PlaceBidPage() {
+    const searchParams = useSearchParams();
+    const collectionId = searchParams.get('collectionId');
+    const router = useRouter();
+    const { mutate: createBid, isPending: isCreatingBid } = useCreateBid();
+
     const [formData, setFormData] = useState({
-        bidAmount: "",
+        price: 0,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle bid placement logic here
-        console.log("Placing bid:", formData);
+        if (!collectionId) {
+            console.error('Collection ID and bid amount are required');
+            return;
+        }
+        if (formData.price <= 0) {
+            toast({
+                title: 'Bid amount must be greater than 0',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        createBid({
+            collectionId,
+            price: formData.price
+        },
+            {
+                onSuccess: () => {
+                    router.push(`/collections`);
+                }
+            }
+        );
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        const { name, value, type } = e.target;
+
+        // Convert numeric fields to numbers
+        if (type === 'number') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value === '' ? 0 : Number(value)
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     return (
@@ -36,7 +73,7 @@ export default function PlaceBidPage() {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16">
                             <div className="flex items-center space-x-4">
-                                <Link href="/">
+                                <Link href="/collections">
                                     <Button variant="ghost" size="sm" className="flex items-center space-x-2">
                                         <ArrowLeft className="h-4 w-4" />
                                         <span>Back</span>
@@ -61,15 +98,15 @@ export default function PlaceBidPage() {
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="bidAmount">Bid Amount ($)</Label>
+                                        <Label htmlFor="price">Bid Amount ($)</Label>
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                id="bidAmount"
-                                                name="bidAmount"
+                                                id="price"
+                                                name="price"
                                                 type="number"
-                                                placeholder="0.00"
-                                                value={formData.bidAmount}
+                                                placeholder="0"
+                                                value={formData.price}
                                                 onChange={handleInputChange}
                                                 className="pl-10"
                                                 required
@@ -80,14 +117,14 @@ export default function PlaceBidPage() {
                                     </div>
 
                                     <div className="flex justify-end space-x-4">
-                                        <Link href="/">
-                                            <Button variant="outline" type="button">
+                                        <Link href="/collections">
+                                            <Button variant="outline" type="button" disabled={isCreatingBid}>
                                                 Cancel
                                             </Button>
                                         </Link>
-                                        <Button type="submit" className="flex items-center space-x-2">
+                                        <Button type="submit" className="flex items-center space-x-2" disabled={isCreatingBid}>
                                             <DollarSign className="h-4 w-4" />
-                                            <span>Place Bid</span>
+                                            <span>{isCreatingBid ? 'Placing Bid...' : 'Place Bid'}</span>
                                         </Button>
                                     </div>
                                 </form>

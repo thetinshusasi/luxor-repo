@@ -35,8 +35,8 @@ export default function DashboardPage() {
 
   // TanStack Query hooks
   // const { data: { data: collectionsData }, isLoading, error } = useCollections(currentPage, itemsPerPage);
-  const acceptBidMutation = useAcceptBid();
-  const rejectBidMutation = useRejectBid();
+  const { mutate: acceptBid, isPending: isAcceptingBid } = useAcceptBid();
+  const { mutate: rejectBid, isPending: isRejectingBid } = useRejectBid();
   const deleteCollectionMutation = useDeleteCollection();
   const { logout, setUser } = useAuth();
   const { data: userDetails, error: userDetailsError } = useUserDetails();
@@ -96,12 +96,12 @@ export default function DashboardPage() {
     }
   };
 
-  const handleAcceptBid = (bidId: string) => {
-    acceptBidMutation.mutate({ bidId });
+  const handleAcceptBid = (bidId: string, collectionId: string) => {
+    acceptBid({ bidId, collectionId });
   };
 
-  const handleRejectBid = (bidId: string) => {
-    rejectBidMutation.mutate({ bidId });
+  const handleRejectBid = (bidId: string, collectionId: string) => {
+    rejectBid({ bidId, collectionId });
   };
 
   const handleDeleteCollection = (collectionId: string) => {
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                   <Link href="/create">
                     <Button className="flex items-center space-x-2">
                       <Plus className="h-4 w-4" />
-                      <span>Create</span>
+                      <span>Create Collection</span>
                     </Button>
                   </Link>
 
@@ -317,7 +317,7 @@ export default function DashboardPage() {
                                         <div className="flex space-x-1">
                                           <Button
                                             size="sm"
-                                            onClick={() => handleAcceptBid(bid.id)}
+                                            onClick={() => handleAcceptBid(bid.id, collection.id)}
                                             className="h-6 w-6 p-0"
                                           >
                                             <Check className="h-3 w-3" />
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                                           <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => handleRejectBid(bid.id)}
+                                            onClick={() => handleRejectBid(bid.id, collection.id)}
                                             className="h-6 w-6 p-0"
                                           >
                                             <X className="h-3 w-3" />

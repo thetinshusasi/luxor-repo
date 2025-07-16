@@ -1,45 +1,122 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, DollarSign, X } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useGetCollectionById, useUpdateBid, Collection, BidStatus } from "@/lib/hooks/useApi";
 
 export default function EditBidPage() {
-    const [formData, setFormData] = useState({
-        bidAmount: "",
-    });
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const bidId = searchParams.get('bidId');
+    const collectionId = searchParams.get('collectionId');
+    const priceFromParams = searchParams.get('price');
 
-    // Simulate loading existing bid data
+    const [price, setPrice] = useState<number>(parseFloat(priceFromParams || '0'));
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch collection details
+    const { data: collection, isLoading: collectionLoading, error: collectionError } = useGetCollectionById(collectionId || '');
+
+    // Update bid mutation
+    const updateBidMutation = useUpdateBid();
+
     useEffect(() => {
-        // In a real app, you'd fetch this from your API
-        setFormData({
-            bidAmount: "3100",
-        });
-    }, []);
+        if (!bidId || !collectionId) {
+            setError('Missing bid or collection information');
+            return;
+        }
 
-    const handleSubmit = (e: React.FormEvent) => {
+        // Set initial price from collection if available
+        setPrice(parseFloat(priceFromParams || '0'));
+    }, [bidId, collectionId, collection, priceFromParams]);
+
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Only allow numbers and decimal points
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setPrice(parseFloat(value));
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle bid update logic here
-        console.log("Updating bid:", formData);
+
+        if (!bidId || !price || isNaN(Number(price))) {
+            setError('Please enter a valid price');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            await updateBidMutation.mutateAsync({
+                bidId,
+                data: { price: Number(price) }
+            });
+
+            // Navigate back to collections page
+            router.push('/collections');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update bid');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleCancel = () => {
-        // Handle bid cancellation logic here
-        console.log("Cancelling bid");
+        router.push('/collections');
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
+    if (!bidId || !collectionId) {
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <p className="text-red-600">Missing bid or collection information</p>
+                        <Button onClick={() => router.push('/collections')} className="mt-4">
+                            Back to Collections
+                        </Button>
+                    </div>
+                </div>
+            </ProtectedRoute>
+        );
+    }
+
+    if (collectionLoading) {
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                        <p className="text-gray-600">Loading bid information...</p>
+                    </div>
+                </div>
+            </ProtectedRoute>
+        );
+    }
+
+    if (collectionError) {
+        return (
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-center">
+                        <p className="text-red-600">Error loading collection: {collectionError.message}</p>
+                        <Button onClick={() => router.push('/collections')} className="mt-4">
+                            Back to Collections
+                        </Button>
+                    </div>
+                </div>
+            </ProtectedRoute>
+        );
+    }
 
     return (
         <ProtectedRoute>
@@ -49,12 +126,14 @@ export default function EditBidPage() {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-16">
                             <div className="flex items-center space-x-4">
-                                <Link href="/">
-                                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                                        <ArrowLeft className="h-4 w-4" />
-                                        <span>Back</span>
-                                    </Button>
-                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleCancel}
+                                    className="flex items-center space-x-2"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    <span>Back</span>
+                                </Button>
                                 <h1 className="text-2xl font-bold text-gray-900">Edit Bid</h1>
                             </div>
                         </div>
@@ -62,54 +141,70 @@ export default function EditBidPage() {
                 </header>
 
                 {/* Main Content */}
-                <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+                <main className="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
                     <div className="px-4 py-6 sm:px-0">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Edit Your Bid</CardTitle>
-                                <CardDescription>
-                                    Update your bid amount for this collection
-                                </CardDescription>
+                                {collection && (
+                                    <div className="text-sm text-gray-600">
+                                        <p>Collection: {collection.name}</p>
+                                        <p>Current Collection Price: ${collection.price}</p>
+                                    </div>
+                                )}
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="bidAmount">Bid Amount ($)</Label>
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                id="bidAmount"
-                                                name="bidAmount"
-                                                type="number"
-                                                placeholder="0.00"
-                                                value={formData.bidAmount}
-                                                onChange={handleInputChange}
-                                                className="pl-10"
-                                                required
-                                                min="0"
-                                                step="0.01"
-                                            />
-                                        </div>
+                                        <Label htmlFor="price">Bid Price ($)</Label>
+                                        <Input
+                                            id="price"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={price}
+                                            onChange={handlePriceChange}
+                                            placeholder="Enter your bid price"
+                                            className="w-full"
+                                            required
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                            Enter a price higher than the current collection price to make your bid competitive.
+                                        </p>
                                     </div>
 
-                                    <div className="flex justify-end space-x-4">
+                                    {error && (
+                                        <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <div className="flex space-x-4">
                                         <Button
-                                            variant="outline"
                                             type="button"
+                                            variant="outline"
                                             onClick={handleCancel}
-                                            className="flex items-center space-x-2"
+                                            disabled={isLoading}
+                                            className="flex-1"
                                         >
-                                            <X className="h-4 w-4" />
-                                            <span>Cancel Bid</span>
+                                            Cancel
                                         </Button>
-                                        <Link href="/">
-                                            <Button variant="outline" type="button">
-                                                Back
-                                            </Button>
-                                        </Link>
-                                        <Button type="submit" className="flex items-center space-x-2">
-                                            <Save className="h-4 w-4" />
-                                            <span>Update Bid</span>
+                                        <Button
+                                            type="submit"
+                                            disabled={isLoading || !price || isNaN(Number(price))}
+                                            className="flex-1"
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                    Updating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save className="h-4 w-4 mr-2" />
+                                                    Update Bid
+                                                </>
+                                            )}
                                         </Button>
                                     </div>
                                 </form>
