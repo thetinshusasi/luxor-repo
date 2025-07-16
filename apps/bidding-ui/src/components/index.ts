@@ -1,10 +1,17 @@
 export { Header } from './layout/Header';
+export { PageLayout } from './layout/PageLayout';
+export { ProtectedRoute } from './ProtectedRoute';
 export { CollectionCard } from './collections/CollectionCard';
+export { CollectionForm } from './collections/CollectionForm';
+export { CollectionsList } from './collections/CollectionsList';
 export { BidItem } from './bids/BidItem';
+export { BidForm } from './bids/BidForm';
 export { DashboardClient } from './dashboard/DashboardClient';
+export { LoginForm } from './auth/LoginForm';
 export { LoadingSpinner } from './ui/LoadingSpinner';
 export { ErrorDisplay } from './ui/ErrorDisplay';
 export { DeleteConfirmationDialog } from './ui/DeleteConfirmationDialog';
 export { PaginationWrapper } from './ui/PaginationWrapper';
-
-export { ProtectedRoute } from './ProtectedRoute';
+export { FormCard } from './ui/FormCard';
+export { FormField } from './ui/FormField';
+export { FormActions, FormActionButton } from './ui/FormActions';
