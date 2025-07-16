@@ -95,6 +95,25 @@ export class UserController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('details')
+  @ApiOperation({ summary: 'Get user details' })
+  @ApiResponse({
+    status: 200,
+    description: 'User details retrieved successfully',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+  })
+  async getUserDetails(@Request() req: { context: IRequestContext }) {
+    const { userId } = req.context;
+    if (!userId) {
+      throw new NotFoundException('User ID is required');
+    }
+    return this.userService.findOne(userId);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Get(':id')
