@@ -9,27 +9,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { CreateCollectionData, useCreateCollection } from "@/lib/hooks/useApi";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CreateCollectionPage() {
-    const [formData, setFormData] = useState({
-        title: "",
+
+    const { mutate: createCollection, isPending: isCreating } = useCreateCollection();
+    const { toast } = useToast();
+    const router = useRouter();
+    const [formData, setFormData] = useState<CreateCollectionData>({
+        name: "",
         description: "",
-        startingPrice: "",
-        endDate: "",
+        price: 0,
+        stock: 0,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle collection creation logic here
+        // Handle collection creation logic 
+        if (formData.name === "" || formData.description === "" || formData.price === 0 || formData.stock === 0) {
+            toast({
+                title: "Please fill in all fields",
+                variant: "destructive",
+            });
+            return;
+        }
         console.log("Creating collection:", formData);
+        createCollection(formData, {
+            onSuccess: () => {
+                router.push('/');
+            },
+        });
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        const { name, value, type } = e.target;
+
+        // Convert numeric fields to numbers
+        if (type === 'number') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value === '' ? 0 : Number(value)
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     return (
@@ -67,10 +95,10 @@ export default function CreateCollectionPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="title">Title</Label>
                                         <Input
-                                            id="title"
-                                            name="title"
+                                            id="name"
+                                            name="name"
                                             placeholder="Enter collection title"
-                                            value={formData.title}
+                                            value={formData.name}
                                             onChange={handleInputChange}
                                             required
                                         />
@@ -89,40 +117,38 @@ export default function CreateCollectionPage() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="startingPrice">Starting Price ($)</Label>
-                                            <Input
-                                                id="startingPrice"
-                                                name="startingPrice"
-                                                type="number"
-                                                placeholder="0.00"
-                                                value={formData.startingPrice}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="startingPrice">Starting Price ($)</Label>
+                                        <Input
+                                            id="price"
+                                            name="price"
+                                            type="number"
+                                            placeholder="0"
+                                            value={formData.price}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="endDate">End Date</Label>
-                                            <Input
-                                                id="endDate"
-                                                name="endDate"
-                                                type="datetime-local"
-                                                value={formData.endDate}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="stock">Stock</Label>
+                                        <Input
+                                            id="stock"
+                                            name="stock"
+                                            type="number"
+                                            value={formData.stock}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
                                     </div>
 
                                     <div className="flex justify-end space-x-4">
                                         <Link href="/">
-                                            <Button variant="outline" type="button">
+                                            <Button variant="outline" type="button" disabled={isCreating}>
                                                 Cancel
                                             </Button>
                                         </Link>
-                                        <Button type="submit" className="flex items-center space-x-2">
+                                        <Button type="submit" className="flex items-center space-x-2" disabled={isCreating}>
                                             <Save className="h-4 w-4" />
                                             <span>Create Collection</span>
                                         </Button>

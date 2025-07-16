@@ -11,6 +11,7 @@ import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDeleteCollection, useGetCollectionById, useUpdateCollection } from "@/lib/hooks/useApi";
+import { useToast } from "@/hooks/use-toast";
 interface FormData {
   name: string;
   description: string;
@@ -24,6 +25,7 @@ export default function EditCollectionPage() {
   const { mutate: deleteCollection, isPending: isDeleting } = useDeleteCollection();
   const { mutate: updateCollection, isPending: isUpdating } = useUpdateCollection();
   const router = useRouter();
+  const { toast } = useToast();
   const id = searchParams.get('id');
   const { data: collection, isLoading, error, refetch: refetchCollection } = useGetCollectionById(id as string);
 
@@ -63,15 +65,40 @@ export default function EditCollectionPage() {
         price,
         stock,
       }
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Collection updated successfully!",
+        });
+        router.push('/');
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: "Failed to update collection. Please try again.",
+          variant: "destructive",
+        });
+        console.error('Error updating collection:', error);
+      }
     });
   };
 
   const handleDelete = () => {
     deleteCollection(id as string, {
       onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Collection deleted successfully!",
+        });
         router.push('/');
       },
       onError: (error) => {
+        toast({
+          title: "Error",
+          description: "Failed to delete collection. Please try again.",
+          variant: "destructive",
+        });
         console.error('Error deleting collection:', error);
       }
     });

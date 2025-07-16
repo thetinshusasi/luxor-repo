@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 import { AuthProvider } from '@/lib/hooks/useAuth';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function RootLayout({
   children,
@@ -33,6 +34,7 @@ export default function RootLayout({
             {children}
           </AuthProvider>
           <ReactQueryDevtools initialIsOpen={false} />
+          <Toaster />
         </QueryClientProvider>
       </body>
     </html>

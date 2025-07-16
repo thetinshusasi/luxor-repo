@@ -54,6 +54,7 @@ export interface CreateCollectionData {
   price: number;
 }
 
+
 export interface UpdateCollectionData {
   name?: string;
   description?: string;
