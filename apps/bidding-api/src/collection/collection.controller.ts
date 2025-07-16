@@ -67,7 +67,7 @@ export class CollectionController {
         !createCollectionDto ||
         Object.keys(createCollectionDto).length === 0
       ) {
-        throw new InternalServerErrorException('Collection data is required');
+        throw new BadRequestException('Collection data is required');
       }
 
       const { userId } = req.context;

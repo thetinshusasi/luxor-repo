@@ -12,6 +12,7 @@ import {
   Request,
   InternalServerErrorException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -109,7 +110,7 @@ export class UserController {
   async getUserDetails(@Request() req: { context: IRequestContext }) {
     const { userId } = req.context;
     if (!userId) {
-      throw new NotFoundException('User ID is required');
+      throw new BadRequestException('User ID is required');
     }
     return this.userService.findOne(userId);
   }
@@ -137,7 +138,7 @@ export class UserController {
   async findOne(@Param('id') id: string) {
     try {
       if (!id || id.trim() === '') {
-        throw new NotFoundException('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
 
       const user = await this.userService.findOne(id);
@@ -179,11 +180,11 @@ export class UserController {
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     try {
       if (!id || id.trim() === '') {
-        throw new NotFoundException('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
 
       if (!updateUserDto || Object.keys(updateUserDto).length === 0) {
-        throw new InternalServerErrorException('Update data is required');
+        throw new BadRequestException('Update data is required');
       }
 
       const updatedUser = await this.userService.update(id, updateUserDto);
@@ -228,7 +229,7 @@ export class UserController {
   async remove(@Param('id') id: string) {
     try {
       if (!id || id.trim() === '') {
-        throw new NotFoundException('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
 
       const deletedUser = await this.userService.update(id, {

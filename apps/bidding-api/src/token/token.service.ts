@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Token } from './entities/token.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,37 +19,67 @@ export class TokenService {
   ) {}
 
   async create(tokenDto: CreateTokenDto): Promise<Token> {
-    // Find the user first
-    const user = await this.userRepository.findOne({
-      where: { id: tokenDto.userId },
-    });
+    try {
+      // Find the user first
+      const user = await this.userRepository.findOne({
+        where: { id: tokenDto.userId },
+      });
 
-    if (!user) {
-      throw new Error(`User with ID ${tokenDto.userId} not found`);
+      if (!user) {
+        throw new NotFoundException(
+          `User with ID ${tokenDto.userId} not found`
+        );
+      }
+
+      // Create the token with the user relationship
+      const token = this.tokensRepository.create({
+        user: user,
+        token: tokenDto.token,
+        expiresAt: tokenDto.expiresAt,
+      });
+
+      const result = await this.tokensRepository.save(token);
+
+      if (!result) {
+        throw new InternalServerErrorException('Failed to create token');
+      }
+
+      return result;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create token');
     }
-
-    // Create the token with the user relationship
-    const token = this.tokensRepository.create({
-      user: user,
-      token: tokenDto.token,
-      expiresAt: tokenDto.expiresAt,
-    });
-
-    return this.tokensRepository.save(token);
   }
 
   async findByUserIdAndToken(
     userId: string,
     token: string
   ): Promise<Token | null> {
-    const tokens = await this.tokensRepository.find({
-      where: { user: { id: userId }, token },
-    });
+    try {
+      const tokens = await this.tokensRepository.find({
+        where: { user: { id: userId }, token },
+      });
 
-    return tokens.length !== 0 ? tokens[0] : null;
+      return tokens.length !== 0 ? tokens[0] : null;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to find token');
+    }
   }
 
   async delete(id: number): Promise<void> {
-    await this.tokensRepository.delete(id);
+    try {
+      const result = await this.tokensRepository.delete(id);
+
+      if (!result || result.affected === 0) {
+        throw new NotFoundException(`Token with ID ${id} not found`);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete token');
+    }
   }
 }
