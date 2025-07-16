@@ -14,7 +14,6 @@ export class BidDto {
     description: 'ID of the collection this bid is for',
     example: '123e4567-e89b-12d3-a456-426614174001',
   })
-  @IsUUID('4', { message: 'Collection ID must be a valid UUID' })
   collectionId!: string;
 
   @ApiProperty({

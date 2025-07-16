@@ -17,25 +17,15 @@ export class ContextExtractInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers['authorization'];
-    console.log('========================================');
-    console.log('authorizationHeader', authorizationHeader);
-    console.log('========================================');
     if (!authorizationHeader) {
       throw new UnauthorizedException('Authorization header missing');
     }
 
     const token = authorizationHeader.replace('Bearer ', '');
 
-    console.log('========================================');
-    console.log('token', token);
-    console.log('========================================');
-
     try {
       const reqContext: IRequestContext = this.jwtService.verify(token);
       const userId = reqContext.userId;
-      console.log('========================================');
-      console.log('userId', userId);
-      console.log('========================================');
       if (!userId) {
         throw new UnauthorizedException('User ID not found in token');
       }

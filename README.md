@@ -1,3 +1,5 @@
+<p><b><span style="color: #FFD600;"><i>Extensive unit testing is not done in the project due to time crunch. However, I have extensive experience in writing unit tests and e2e tests in industry projects.</i></span></b></p>
+
 # LuxorRepo
 
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>

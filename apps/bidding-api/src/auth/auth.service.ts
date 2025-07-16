@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { TokenService } from '../token/token.service';
@@ -49,9 +54,9 @@ export class AuthService {
         sub: user.id, // JWT standard uses 'sub' for subject/user ID
         role: user.role,
       };
-     
+
       const accessToken = this.jwtService.sign(payload);
-    
+
       const decodedToken = this.jwtService.decode(accessToken) as {
         userId: string;
         email: string;
@@ -61,13 +66,12 @@ export class AuthService {
       };
 
       if (!decodedToken.userId) {
-        throw new Error('User ID is required');
+        throw new BadRequestException('User ID is required');
       }
 
       // Convert the JWT exp timestamp to a Date object
       const expiresAt = new Date(decodedToken.exp * 1000);
 
-   
       const { id } = await this.tokensService.create({
         userId: user.id || '',
         token: accessToken,
@@ -84,9 +88,9 @@ export class AuthService {
 
       return tokenPayload;
     } catch (error) {
-      this.logger.error('❌ Error during login:', error);
-     
-      throw new Error('Login failed');
+      this.logger.error('Error during login:', error);
+
+      throw new InternalServerErrorException('Login failed');
     }
   }
 }
