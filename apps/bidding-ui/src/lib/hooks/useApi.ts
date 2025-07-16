@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+} from '@tanstack/react-query';
 
 // Types matching backend DTOs and entities
 export interface Collection {
@@ -13,7 +18,14 @@ export interface Collection {
   deletedAt?: string;
   isDeleted: boolean;
   isOwner: boolean;
-  bids: Bid[];
+}
+
+export interface CollectionBid {
+  id: string;
+  collectionId: string;
+  isOwner: boolean;
+  price: number;
+  status: BidStatus;
 }
 
 export interface Bid {
@@ -60,6 +72,15 @@ export interface UpdateBidData {
 
 export interface AcceptBidData {
   bidId: string;
+}
+
+export interface CollectionResponse {
+  id: string;
+  name: string;
+  description: string;
+  stock: number;
+  price: number;
+  isOwner: boolean;
 }
 
 // API base URL - update this to match your backend
@@ -118,6 +139,16 @@ export const queryKeys = {
   user: ['users'] as const,
 };
 
+export const useGetCollectionById = (
+  id: string
+): UseQueryResult<CollectionResponse, Error> => {
+  return useQuery({
+    queryKey: queryKeys.collection(id),
+    queryFn: () => apiCall(`/collections/${id}`),
+    enabled: !!id,
+  });
+};
+
 export const useUserDetails = () => {
   return useQuery({
     queryKey: queryKeys.user,
@@ -138,8 +169,21 @@ export const useCollections = (page = 1, limit = 10) => {
 export const useUserCollections = (page = 1, limit = 10) => {
   return useQuery({
     queryKey: [...queryKeys.collections, 'user'],
-    queryFn: () => apiCall('/collections/userCollections'),
+    queryFn: () =>
+      apiCall(`/collections/userCollections?page=${page}&limit=${limit}`),
     staleTime: 30 * 1000,
+  });
+};
+
+export const useAllBidsByCollectionIds = (collectionIds: string[]) => {
+  return useQuery({
+    queryKey: ['bids', 'allBidsByCollectionIds', collectionIds],
+    queryFn: () =>
+      apiCall(`/collections/allBidsByCollectionIds`, {
+        method: 'POST',
+        body: JSON.stringify({ collectionIds }),
+      }),
+    enabled: collectionIds && collectionIds.length > 0,
   });
 };
 
@@ -188,11 +232,14 @@ export const useUpdateCollection = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateCollectionData }) =>
-      apiCall(`/collections/${id}`, {
+    mutationFn: ({ id, data }: { id: string; data: UpdateCollectionData }) => {
+      console.log('data=======', data);
+
+      return apiCall(`/collections/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
-      }),
+      });
+    },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
       queryClient.invalidateQueries({ queryKey: queryKeys.collection(id) });

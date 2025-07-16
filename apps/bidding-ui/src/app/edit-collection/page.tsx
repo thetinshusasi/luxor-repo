@@ -9,44 +9,126 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDeleteCollection, useGetCollectionById, useUpdateCollection } from "@/lib/hooks/useApi";
+interface FormData {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+}
 
 export default function EditCollectionPage() {
-  const [formData, setFormData] = useState({
-    title: "",
+
+  const searchParams = useSearchParams();
+  const { mutate: deleteCollection, isPending: isDeleting } = useDeleteCollection();
+  const { mutate: updateCollection, isPending: isUpdating } = useUpdateCollection();
+  const router = useRouter();
+  const id = searchParams.get('id');
+  const { data: collection, isLoading, error, refetch: refetchCollection } = useGetCollectionById(id as string);
+
+
+
+
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
     description: "",
-    startingPrice: "",
-    endDate: "",
+    price: 0,
+    stock: 0,
   });
 
   // Simulate loading existing collection data
   useEffect(() => {
     // In a real app, you'd fetch this from your API
-    setFormData({
-      title: "Collection 1",
-      description: "A beautiful collection of vintage items with historical significance.",
-      startingPrice: "1500",
-      endDate: "2024-12-31T23:59",
-    });
-  }, []);
+    if (collection) {
+      setFormData({
+        name: collection.name,
+        description: collection.description,
+        price: Number(collection.price),
+        stock: Number(collection.stock),
+      });
+    }
+  }, [collection]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle collection update logic here
-    console.log("Updating collection:", formData);
+    const { name, description, price, stock } = formData;
+    console.log('Submitting form data:', { name, description, price, stock, priceType: typeof price, stockType: typeof stock });
+    updateCollection({
+      id: id as string,
+      data: {
+        name,
+        description,
+        price,
+        stock,
+      }
+    });
   };
 
   const handleDelete = () => {
-    // Handle collection deletion logic here
-    console.log("Deleting collection");
+    deleteCollection(id as string, {
+      onSuccess: () => {
+        router.push('/');
+      },
+      onError: (error) => {
+        console.error('Error deleting collection:', error);
+      }
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type } = e.target;
+    console.log('Input change:', { name, value, type, valueType: typeof value });
+
+    // Convert numeric fields to numbers
+    if (type === 'number') {
+      const numericValue = value === '' ? 0 : Number(value);
+      console.log('Converting to number:', { name, value, numericValue, numericValueType: typeof numericValue });
+      setFormData(prev => ({
+        ...prev,
+        [name]: numericValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading collection...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading collection: {error.message}</p>
+            <Button onClick={() => refetchCollection()} className="mr-2">
+              Retry
+            </Button>
+            <Link href="/">
+              <Button variant="outline">
+                Back to Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -81,12 +163,12 @@ export default function EditCollectionPage() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="name">Name</Label>
                     <Input
-                      id="title"
-                      name="title"
+                      id="name"
+                      name="name"
                       placeholder="Enter collection title"
-                      value={formData.title}
+                      value={formData.name}
                       onChange={handleInputChange}
                       required
                     />
@@ -105,32 +187,32 @@ export default function EditCollectionPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="startingPrice">Starting Price ($)</Label>
-                      <Input
-                        id="startingPrice"
-                        name="startingPrice"
-                        type="number"
-                        placeholder="0.00"
-                        value={formData.startingPrice}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="endDate">End Date</Label>
-                      <Input
-                        id="endDate"
-                        name="endDate"
-                        type="datetime-local"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price ($)</Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      placeholder="0.00"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      required
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stock">Stock</Label>
+                    <Input
+                      id="stock"
+                      name="stock"
+                      type="number"
+                      placeholder="0"
+                      value={formData.stock}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+
 
                   <div className="flex justify-between items-center">
                     <Button
@@ -149,7 +231,7 @@ export default function EditCollectionPage() {
                           Cancel
                         </Button>
                       </Link>
-                      <Button type="submit" className="flex items-center space-x-2">
+                      <Button type="submit" className="flex items-center space-x-2" onClick={handleSubmit} disabled={isDeleting}>
                         <Save className="h-4 w-4" />
                         <span>Save Changes</span>
                       </Button>

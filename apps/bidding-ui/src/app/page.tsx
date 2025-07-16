@@ -8,27 +8,55 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Check, X, User, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useCollections, useAcceptBid, useRejectBid, useDeleteCollection, Collection, Bid, BidStatus, useUserDetails, useUserCollections } from "@/lib/hooks/useApi";
+import {
+  useAcceptBid, useRejectBid, useDeleteCollection, Collection,
+  BidStatus, useUserDetails, useUserCollections, useAllBidsByCollectionIds, CollectionBid
+} from "@/lib/hooks/useApi";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { CollectionBids } from "@/lib/models/interfaces/collectionBids";
+
+export interface UserCollections {
+  data: Collection[];
+  pageSize: number;
+  page: number;
+  totalPages: number;
+}
 
 export default function DashboardPage() {
   const [expandedCollections, setExpandedCollections] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
+  const itemsPerPage = 4;
 
   // TanStack Query hooks
-  const { data: collectionsData, isLoading, error } = useCollections(currentPage, itemsPerPage);
+  // const { data: { data: collectionsData }, isLoading, error } = useCollections(currentPage, itemsPerPage);
   const acceptBidMutation = useAcceptBid();
   const rejectBidMutation = useRejectBid();
   const deleteCollectionMutation = useDeleteCollection();
   const { logout, setUser } = useAuth();
-  const { data: userDetails, isLoading: userDetailsLoading, error: userDetailsError } = useUserDetails();
-  const { data: userCollections, isLoading: userCollectionsLoading, error: userCollectionsError } = useUserCollections();
-  console.log(userCollections);
+  const { data: userDetails, error: userDetailsError } = useUserDetails();
+  const { data: {
+    data: userCollectionsData = [],
+    pageSize,
+    page,
+    totalPages,
+  } = {}, isLoading: userCollectionsLoading, error: userCollectionsError, refetch: userCollectionsRefetch } = useUserCollections(currentPage, itemsPerPage);
 
+  const { data: allBidsByCollectionIdsData,
+    isLoading: allBidsByCollectionIdsLoading, error: allBidsByCollectionIdsError } = useAllBidsByCollectionIds(userCollectionsData.map((collection: Collection) => collection.id));
+  console.log(allBidsByCollectionIdsData);
+  console.log(allBidsByCollectionIdsLoading);
+  console.log(allBidsByCollectionIdsError);
+
+  const collectionIdAndBidsMap = new Map<string, CollectionBid[]>();
+  allBidsByCollectionIdsData?.forEach((collectionBidList: CollectionBids) => {
+    collectionIdAndBidsMap.set(collectionBidList.collectionId, collectionBidList.bids);
+  });
 
 
   useEffect(() => {
@@ -42,6 +70,13 @@ export default function DashboardPage() {
     }
   }, [userDetails, userDetailsError, setUser]);
 
+  useEffect(() => {
+    userCollectionsRefetch();
+  }, [currentPage, itemsPerPage, userCollectionsRefetch]);
+
+
+
+
   const toggleCollection = (collectionId: string) => {
     setExpandedCollections(prev =>
       prev.includes(collectionId)
@@ -50,13 +85,7 @@ export default function DashboardPage() {
     );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+
 
   const getStatusColor = (status: BidStatus) => {
     switch (status) {
@@ -76,9 +105,21 @@ export default function DashboardPage() {
   };
 
   const handleDeleteCollection = (collectionId: string) => {
-    if (confirm('Are you sure you want to delete this collection?')) {
-      deleteCollectionMutation.mutate(collectionId);
+    setCollectionToDelete(collectionId);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (collectionToDelete) {
+      deleteCollectionMutation.mutate(collectionToDelete);
+      setDeleteModalOpen(false);
+      setCollectionToDelete(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCollectionToDelete(null);
   };
 
   const handleEditCollection = (collectionId: string) => {
@@ -90,7 +131,7 @@ export default function DashboardPage() {
     logout();
   };
 
-  if (isLoading) {
+  if (userCollectionsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -101,20 +142,22 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
+  if (userCollectionsError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">Error loading collections: {error.message}</p>
+          <p className="text-red-600">Error loading collections: {userCollectionsError.message}</p>
           <Button onClick={handleLogout} className="mt-4">
-            Retry
+            Log out and try again
           </Button>
         </div>
       </div>
     );
   }
 
-  const collections = collectionsData || [];
+  const collections = userCollectionsData || [];
+  const disableNextButton = currentPage >= totalPages;
+  const disablePreviousButton = currentPage <= 1;
 
   return (
     <ProtectedRoute>
@@ -163,109 +206,147 @@ export default function DashboardPage() {
           <div className="px-4 py-6 sm:px-0">
             <div className="grid grid-cols-1 gap-6">
               {collections.map((collection: Collection) => (
-                <Card key={collection.id} className="shadow-sm">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl font-semibold">
-                          {collection.name}
-                        </CardTitle>
-                        <p className="text-gray-600 mt-2">{collection.description}</p>
+                <Collapsible
+                  key={collection.id}
+                  open={expandedCollections.includes(collection.id)}
+                  onOpenChange={() => toggleCollection(collection.id)}
+                >
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-0 h-auto">
+                              {expandedCollections.includes(collection.id) ? (
+                                <ChevronDown className="h-5 w-5" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5" />
+                              )}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <div>
+                            <CardTitle className="text-xl">{collection.name}</CardTitle>
+                            <p className="text-sm text-gray-600 mt-1">{collection.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">Price</p>
+                            <p className="text-lg font-semibold text-green-600">
+                              ${collection.price}
+                            </p>
+                          </div>
+                          {collection.isOwner && (
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditCollection(collection.id)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteCollection(collection.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                          {!collection.isOwner && (
+                            <Link href={`/place-bid?collectionId=${collection.id}`}>
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                <Plus className="h-4 w-4 mr-1" />
+                                Place Bid
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center space-x-6 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <span>Stock: {collection.stock}</span>
+                          </div>
+                          {(() => {
+                            const bids = collectionIdAndBidsMap.get(collection.id)?.sort((a, b) => b.price - a.price);
+                            return bids && bids.length > 0 ? (
+                              <div className="flex items-center space-x-1">
+                                <User className="h-4 w-4" />
+                                <span>{bids.length} bids</span>
+                              </div>
+                            ) : null;
+                          })()}
+                        </div>
                         <Badge variant="outline">
                           ${collection.price}
                         </Badge>
-                        {collection.isOwner && (
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditCollection(collection.id)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteCollection(collection.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center text-sm text-gray-500">
-                        <span>Created: {formatDate(collection.createdAt)}</span>
-                        <span>Stock: {collection.stock}</span>
-                      </div>
+                    </CardHeader>
 
-                      {collection.bids && collection.bids.length > 0 && (
-                        <Collapsible>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-between">
-                              <span>Bids ({collection.bids.length})</span>
-                              <ChevronDown className="h-4 w-4" />
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="space-y-2">
-                            {collection.bids.map((bid: Bid) => (
-                              <div
-                                key={bid.id}
-                                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                              >
-                                <div>
-                                  <span className="font-medium">${bid.price}</span>
-                                  <span className="text-sm text-gray-500 ml-2">
-                                    by User {bid.userId}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Badge className={getStatusColor(bid.status)}>
-                                    {bid.status}
-                                  </Badge>
-                                  {collection.isOwner && bid.status === BidStatus.PENDING && (
-                                    <div className="flex space-x-1">
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleAcceptBid(bid.id)}
-                                        className="h-6 w-6 p-0"
-                                      >
-                                        <Check className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleRejectBid(bid.id)}
-                                        className="h-6 w-6 p-0"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
+                    <CollapsibleContent>
+                      <CardContent className="pt-0">
+                        {(() => {
+                          const bids = collectionIdAndBidsMap.get(collection.id);
+                          return bids && bids.length > 0 ? (
+                            <div className="border-t pt-4">
+                              <h4 className="font-semibold mb-3">Bids</h4>
+                              <div className="space-y-3">
+                                {bids.map((bid: CollectionBid) => (
+                                  <div
+                                    key={bid.id}
+                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                  >
+                                    <div className="flex items-center space-x-3">
+
+                                      <div>
+                                        <p className="font-medium text-sm">Bid #{bid.id.substring(0, 8)}</p>
+                                        <p className="text-xs text-gray-500">Bid placed</p>
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
+                                    <div className="flex items-center space-x-3">
+                                      <span className="font-semibold text-lg">
+                                        ${bid.price}
+                                      </span>
+                                      <Badge className={getStatusColor(bid.status)}>
+                                        {bid.status}
+                                      </Badge>
+                                      {collection.isOwner && bid.status === BidStatus.PENDING && (
+                                        <div className="flex space-x-1">
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleAcceptBid(bid.id)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            <Check className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleRejectBid(bid.id)}
+                                            className="h-6 w-6 p-0"
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      )}
-
-                      {!collection.isOwner && (
-                        <div className="flex justify-between items-center">
-                          <Link href={`/place-bid?collectionId=${collection.id}`}>
-                            <Button variant="outline" size="sm">
-                              Place Bid
-                            </Button>
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                            </div>
+                          ) : (
+                            <div className="border-t pt-4">
+                              <p className="text-gray-500 text-center py-4">No bids yet</p>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
               ))}
             </div>
 
@@ -277,7 +358,7 @@ export default function DashboardPage() {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        className={disablePreviousButton ? "pointer-events-none opacity-50" : "cursor-pointer"}
                       />
                     </PaginationItem>
                     <PaginationItem>
@@ -286,7 +367,7 @@ export default function DashboardPage() {
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => setCurrentPage(currentPage + 1)}
-                        className={collections.length < itemsPerPage ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        className={disableNextButton ? "pointer-events-none opacity-50" : "cursor-pointer"}
                       />
                     </PaginationItem>
                   </PaginationContent>
@@ -296,6 +377,26 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
+
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this collection? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelDelete}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ProtectedRoute>
   );
 }
