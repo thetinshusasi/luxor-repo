@@ -18,6 +18,7 @@ import {
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { CollectionBids } from "@/lib/models/interfaces/collectionBids";
+import { User as UserType } from "@/lib/hooks/useAuth";
 
 export interface UserCollections {
   data: Collection[];
@@ -32,18 +33,13 @@ export default function DashboardPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
   const itemsPerPage = 4;
-
-  // TanStack Query hooks
-  // const { data: { data: collectionsData }, isLoading, error } = useCollections(currentPage, itemsPerPage);
-  const { mutate: acceptBid, isPending: isAcceptingBid } = useAcceptBid();
-  const { mutate: rejectBid, isPending: isRejectingBid } = useRejectBid();
+  const { mutate: acceptBid } = useAcceptBid();
+  const { mutate: rejectBid } = useRejectBid();
   const deleteCollectionMutation = useDeleteCollection();
   const { logout, setUser } = useAuth();
   const { data: userDetails, error: userDetailsError } = useUserDetails();
   const { data: {
     data: userCollectionsData = [],
-    pageSize,
-    page,
     totalPages,
   } = {}, isLoading: userCollectionsLoading, error: userCollectionsError, refetch: userCollectionsRefetch } = useUserCollections(currentPage, itemsPerPage);
 
@@ -61,7 +57,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (userDetails) {
-      setUser(userDetails);
+      setUser(userDetails as UserType);
       return;
     }
     if (userDetailsError) {

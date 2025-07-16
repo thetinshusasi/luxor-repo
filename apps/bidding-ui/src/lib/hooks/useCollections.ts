@@ -34,10 +34,7 @@ export const useCollections = (
   });
 };
 
-export const useUserCollections = (
-  page = 1,
-  limit = 10
-): UseQueryResult<Collection[], Error> => {
+export const useUserCollections = (page = 1, limit = 10) => {
   return useQuery({
     queryKey: [...queryKeys.collections, 'user'],
     queryFn: () =>

@@ -2,7 +2,7 @@ import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { apiCall, queryKeys } from './api';
 import { User } from './types';
 
-export const useUserDetails = (): UseQueryResult<User, Error> => {
+export const useUserDetails = (): UseQueryResult<Partial<User>, Error> => {
   return useQuery({
     queryKey: queryKeys.user,
     queryFn: () => apiCall('/users/details'),
