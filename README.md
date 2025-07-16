@@ -28,6 +28,66 @@ cp apps/bidding-ui/.env.example apps/bidding-ui/.env
 npx nx run bidding-api:dev-full
 ```
 
+## 🏃‍♂️ Local Development Setup
+
+Follow these steps to run the project locally:
+
+### Prerequisites
+
+1. **Make sure Docker, pnpm, and Node.js are installed on your machine**
+   - Docker and Docker Compose
+   - pnpm (recommended package manager)
+   - Node.js (v18 or higher)
+
+### Step-by-Step Setup
+
+2. **Start Docker application**
+
+   ```bash
+   # Make sure Docker is running on your system
+   docker --version
+   docker-compose --version
+   ```
+
+3. **Navigate to the API directory and run migrations**
+
+   ```bash
+   cd apps/bidding-api
+   pnpm migration:run
+   ```
+
+4. **Move back to the base directory and start the backend**
+
+   ```bash
+   cd ../..  # Return to project root
+   npx nx serve bidding-api
+   ```
+
+   Run this in one terminal window.
+
+5. **Start the frontend in another terminal**
+   ```bash
+   npx nx serve bidding-ui
+   ```
+   Run this in a separate terminal window.
+
+### Important Notes
+
+⚠️ **Database Reset Warning**: Every time you restart the backend server, the database is cleared and reseeded.
+
+**To handle this:**
+
+- Make sure to go to the login page in the frontend to create the updated token
+- Or use the login API to get the updated token
+- This ensures you have valid authentication for the fresh database
+
+### Access URLs
+
+- **Frontend (bidding-ui)**: http://localhost:4200
+- **Backend (bidding-api)**: http://localhost:3001/api
+- **PostgreSQL Database**: localhost:5432
+- **pgAdmin**: http://localhost:5050 (admin@luxor.com / admin)
+
 ### Docker Commands
 
 The project includes Docker Compose setup for PostgreSQL and pgAdmin. Use these Nx targets:
@@ -57,7 +117,7 @@ npx nx run bidding-api:dev-full
 
 ### Access URLs
 
-- **Frontend (bidding-ui)**: http://localhost:3000
+- **Frontend (bidding-ui)**: http://localhost:4200
 - **Backend (bidding-api)**: http://localhost:3001/api
 - **PostgreSQL Database**: localhost:5432
 - **pgAdmin**: http://localhost:5050 (admin@luxor.com / admin)
@@ -199,7 +259,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 JWT_EXPIRES_IN=24h
 
 # CORS Configuration
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=http://localhost:4200
 
 # Logging
 LOG_LEVEL=debug
@@ -369,7 +429,7 @@ To run the development server for the frontend application:
 npx nx serve bidding-ui
 ```
 
-This will start the Next.js development server, typically on `http://localhost:3000`.
+This will start the Next.js development server, typically on `http://localhost:4200`.
 
 To create a production build:
 
